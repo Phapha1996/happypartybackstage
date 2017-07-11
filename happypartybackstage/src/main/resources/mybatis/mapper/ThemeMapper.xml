@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<!-- author:Caizhf -->
+<!-- date:2017-6-21 -->
+<mapper namespace="com.party.decoration.mapper.ThemeMapper">
+	<resultMap type="com.party.domain.Theme" id="baseMap">
+		<id column="thid" property="thid" />
+		<result column="theme_name" property="themeName" />
+		<result column="sequence" property="sequence"/>
+		<!-- 图片 -->
+		<association property="img" javaType="com.party.domain.Img">
+			<id column="iid" property="iid" />
+			<result column="product_type" property="productType" />
+			<result column="product_id" property="productId" />
+			<result column="img_url" property="imgUrl" />
+		</association>
+	</resultMap>
+	<sql id="sequence">
+		ORDER BY sequence DESC
+	</sql>
+	<sql id="page">
+		LIMIT #{startIndex},#{pageSize}
+	</sql>
+	
+	<insert id="save" parameterType="com.party.domain.Theme">
+		<selectKey keyProperty="thid" order="AFTER" resultType="int">
+			SELECT LAST_INSERT_ID()
+		</selectKey>
+		INSERT INTO theme(theme_name) VALUES(#{themeName})
+	</insert>
+	
+	<select id="countList" resultType="int">
+		SELECT COUNT(*) FROM theme
+	</select>
+	
+	<select id="list" resultMap="baseMap">
+		SELECT t.*,i.* FROM theme t LEFT JOIN img i
+		ON (i.product_type='主题' AND i.product_id=t.thid)
+		<include refid="sequence"></include>
+		<include refid="page"></include>
+	</select>
+	
+	<select id="listLikeByName" resultMap="baseMap">
+		SELECT t.*,i.* FROM theme t LEFT JOIN img i
+		ON (i.product_type='主题' AND i.product_id=t.thid)
+		WHERE t.theme_name LIKE CONCAT('%',#{key},'%')
+		<include refid="sequence"></include>
+		<include refid="page"></include>
+	</select>
+	
+	<select id="countLikeByName" parameterType="java.lang.String" resultType="int">
+		SELECT COUNT(*) FROM theme t
+		WHERE t.theme_name LIKE CONCAT('%',#{key},'%')
+	</select>
+	
+	<delete id="deleteById" parameterType="int">
+		DELETE FROM theme WHERE thid=#{thid}
+	</delete>
+	
+	<select id="findById" parameterType="int" resultMap="baseMap">
+		SELECT * FROM theme t LEFT JOIN img i
+		ON (i.product_type='主题' AND i.product_id=t.thid)
+		WHERE t.thid=#{thid}
+	</select>
+	
+	<update id="updateById" parameterType="com.party.domain.Theme">
+		UPDATE theme SET theme_name=#{themeName} WHERE thid=#{thid}
+	</update>
+	
+	<update id="updateSequenceById">
+		UPDATE theme SET sequence=#{sequence} WHERE thid=#{thid}
+	</update>
+</mapper>

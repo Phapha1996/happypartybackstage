@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<title>场地布置管理</title>
+	<link rel="stylesheet" href="../plugins/layui/css/layui.css" media="all" />
+	<link rel="stylesheet" href="../css/global.css" media="all">
+	<link rel="stylesheet" href="../plugins/font-awesome/css/font-awesome.min.css">
+	<link rel="stylesheet" href="../css/table.css" />
+</head>
+<body>
+	<div class="admin-main">
+		<blockquote class="layui-elem-quote">
+			<button type="button" class="layui-btn layui-btn-small" onclick="history.go(-1)">返回</button>
+			<button type="button" class="layui-btn layui-btn-small" onclick="addCategory()"><i class="fa fa-plus" aria-hidden="true"></i> 添加</button>
+		</blockquote>
+		<fieldset class="layui-elem-field">
+			<legend>场地布置商品分类列表</legend>
+			<div class="layui-field-box layui-form">
+				<table class="layui-table admin-table">
+					<thead>
+						<tr>
+							<th style="width: 30px;">id</th>
+							<th>名称</th>
+							<th>操作</th>
+						</tr>
+					</thead>
+					<tbody id="content">
+					</tbody>
+				</table>
+			</div>
+		</fieldset>
+		<div class="admin-table-page">
+			<div id="paged" class="page">
+
+			</div>
+		</div>
+	</div>
+
+	<!--模板-->
+	<script type="text/html" id="tpl">
+		<% for(var i=0;i<$data.length;i++){ %>
+			<tr data-id="<%==$data[i].dcid %>">
+				<td>
+				<%==$data[i].dcid%>
+				</td>
+				<td>
+					<%==$data[i].catName %>
+				</td>
+				<td>
+					<a onclick="updateTheme('<%==$data[i].dcid%>','<%==$data[i].catName %>')" class="info layui-btn layui-btn-normal layui-btn-mini">编辑</a>
+					<a onclick="deleteData(<%==$data[i].dcid %>)" data-opt="del" class="layui-btn layui-btn-danger layui-btn-mini">删除</a>
+				</td>
+			</tr>
+			<% } %>
+	</script>
+
+	<script type="text/javascript" src="../plugins/layui/layui.js"></script>
+	<script type="text/javascript" src="../js/template.js"></script>
+	<script type="text/javascript" src="../js/public.js"></script>
+	<script type="text/javascript" src="../js/jquery.min.js"></script>
+	<script>
+		var data;
+		var page = 1;
+		var size = 10;
+		//initPage(page,size);
+		var pageData;
+		var id = getUrlParam("id");
+		var key = getUrlParam("key");
+
+
+		layui.use(['laypage', 'layer', 'element'], function() {
+			var laypage = layui.laypage,
+				layer = layui.layer;
+			var $ = layui.jquery;
+			var totalPage = getPage(size);
+			 laypage({
+				cont: 'paged',
+				pages: totalPage,
+				skip: true,
+				jump: function(obj, first) {
+					initPage(obj.curr, size);
+				}
+			});
+		});
+
+		function initPage(page, size) {
+			if(key!=null){
+				var url = '/admin/dectheme/list/like/'+page+'?key='+key+'&pageSize='+size;
+				$("input[name='key']").val(key);
+			}else{
+				var url = '/admin/dec/cat/list/'+page+'?pageSize='+size;
+			}
+			$.ajax({
+				url: url,
+				dataType: 'json',
+				async: false,
+				success: function(response) {
+					if (response.code == 200) {
+						data = response;
+					}
+				}
+			});
+			var html = template('tpl', data.result.list);
+			document.getElementById('content').innerHTML = html;
+		}
+
+		function getPage(size) {
+			var totalPage;
+			if(key!=null){
+				var url = '/admin/dectheme/list/like/'+page+'?key='+key+'&pageSize='+size;
+			}else{
+					var url = '/admin/dec/cat/list/'+page+'?pageSize='+size;
+			}
+			$.ajax({
+				url: url,
+				dataType: 'json',
+				async: false,
+				success: function(response) {
+					totalPage = response.result.totlepage;
+
+				}
+			});
+			return totalPage;
+		}
+
+
+		function deleteData(id) {
+			layer.open({
+				content: '你确定要删除么?',
+				btn: ['确定', '取消'],
+				yes: function(index, layero) {
+					//按钮【按钮一】的回调
+					$.ajax({
+						url: '/admin/dec/cat/delete/' + id,
+						dataType: 'json',
+						async: false,
+						success: function(response) {
+							layer.close(index);
+							if (response.code == 200) {
+								toast("删除成功");
+								$("tr[data-id='" + id + "']").hide();
+							} else {
+								toast("删除失败");
+							}
+						}
+					});
+
+				}
+			});
+		}
+
+
+
+		function addCategory(){
+			layer.open({
+				title:"添加主题",
+				content:'<input type="text" id="categoryName" value=""  placeholder="名称" lay-verify="required" autocomplete="off"  class="layui-input">',
+				btn: ['确定', '关闭'],
+				yes: function(index, layero){
+					//按钮【按钮一】的回调
+					$.ajax({
+						url: '/admin/dec/cat/add?catName=' + $("#categoryName").val(),
+						dataType: 'json',
+						async: false,
+						success: function(response) {
+							if (response.code == 200) {
+								toast("添加成功");
+								//location.reload();
+							} else {
+								toast("添加失败");
+							}
+
+						}
+					});
+				}
+			});
+		}
+
+		function updateTheme(dcid,title){
+			layer.open({
+				title:"添加主题",
+				content:'<input type="text" id="categoryName" value="'+title+'"  placeholder="主题名" lay-verify="required" autocomplete="off"  class="layui-input">',
+				btn: ['确定', '关闭'],
+				yes: function(index, layero){
+					//按钮【按钮一】的回调
+					$.ajax({
+						url: '/admin/dec/cat/update?catName='+$("#categoryName").val()+'&&dcid=' + dcid,
+						dataType: 'json',
+						async: false,
+						success: function(response) {
+							if (response.code == 200) {
+								toast("修改成功");
+								location.reload();
+							} else {
+								toast("修改失败");
+							}
+
+						}
+					});
+				}
+			});
+		}
+	</script>
+</body>
+
+</html>

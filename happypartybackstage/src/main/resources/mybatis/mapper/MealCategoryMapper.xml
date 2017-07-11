@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<!-- author:Caizhf -->
+<!-- createDate:2017-6-20 -->
+<!-- email:1115054416@qq.com  -->
+<mapper namespace="com.party.product.mapper.MealCategoryMapper">
+	<resultMap type="com.party.domain.MealCategory" id="baseMap">
+		<id column="mcid" property="mcid" />
+		<result column="cat_name" property="categoryName" />
+		<result column="sequence" property="sequence" />
+		<!-- 图片 -->
+		<collection property="imgs" ofType="com.party.domain.Img">
+			<id column="iid" property="iid" />
+			<result column="product_type" property="productType" />
+			<result column="product_id" property="productId" />
+			<result column="img_url" property="imgUrl" />
+		</collection>
+	</resultMap>
+	<!-- 根据排序序号排序的sql片段-->
+	<sql id="orderByandPage">
+		ORDER BY sequence DESC
+		LIMIT #{startIndex},#{pageSize}
+	</sql>
+	<insert id="save" parameterType="com.party.domain.MealCategory">
+		<selectKey keyProperty="mcid" resultType="int" order="AFTER">
+			SELECT LAST_INSERT_ID()
+		</selectKey>
+		INSERT INTO meal_category(cat_name,sequence) VALUES (#{categoryName},#{sequence})
+	</insert>
+	
+	<select id="findById" parameterType="int" resultMap="baseMap">
+		SELECT * FROM meal_category mc LEFT JOIN img i
+		ON (i.product_type='套餐类型' AND i.product_id=mc.mcid)
+		WHERE mc.mcid=#{mcid}
+	</select>
+	
+	<select id="countList" resultType="int">
+		SELECT COUNT(*) FROM meal_category		
+	</select>
+	
+	<select id="list" resultMap="baseMap">
+		SELECT * FROM meal_category mc LEFT JOIN img i
+		ON (i.product_type='套餐类型' AND i.product_id=mc.mcid)
+		<include refid="orderByandPage"></include>
+	</select>
+	
+	<update id="update" parameterType="com.party.domain.MealCategory">
+		UPDATE meal_category SET cat_name=#{categoryName},sequence=#{sequence}
+		WHERE mcid=#{mcid}
+	</update>
+	
+	<update id="updateSequenceById">
+		UPDATE meal_category SET sequence=#{sequence} WHERE mcid=#{mcid}
+	</update>
+	<delete id="deleteById" parameterType="int">
+		DELETE FROM meal_category WHERE mcid=#{mcid}
+	</delete>
+	
+</mapper>

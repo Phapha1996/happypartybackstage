@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<!-- author:Caizhf -->
+<!-- createDate:2017-5-20 -->
+<!-- email:1115054416@qq.com  -->
+<!-- 购物清单的Mapper -->
+
+<mapper namespace="com.party.orders.mapper.ShopCartMapper">
+
+	<resultMap type="com.party.dto.OrdersDTO" id="OrdersDTOMap">
+	<!-- ShopCart Start -->
+		<id column="spid" property="spid"/>
+		<result column="product_type" property="productType"/>
+		<result column="product_id" property="productId"/>
+		<!-- 需要的数量 -->
+		<result column="number" property="number"/>
+		<result column="orders_num" property="ordersNum"/>
+		<result column="orders_state" property="ordersState"/>
+		<result column="ctime" property="ctime"/>
+	<!-- shopCart End -->
+	<!-- OrdersDTO Start -->
+		<result column="title" property="title"/>
+		<result column="price" property="price"/>
+		<!-- 商品拥有的数量 -->
+		<result column="has_number" property="hasNumber"/>
+	<!-- OrdersDTO END -->
+		<association property="user" javaType="com.party.domain.User">
+			<id column="id" property="id"/>
+			<result column="username" property="username"/>
+			<result column="nickname" property="nickname"/>
+			<result column="email" property="email"/>
+		</association>
+		<association property="img" javaType="com.party.domain.Img">
+			<id column="iid" property="iid"/>
+			<result column="img_url" property="imgUrl"/>
+		</association>
+	</resultMap>
+	
+	<resultMap type="com.party.domain.ShopCart" id="BaseMap">
+		<id column="spid" property="spid"/>
+		<result column="product_type" property="productType"/>
+		<result column="product_id" property="productId"/>
+		<result column="number" property="number"/>
+		<result column="orders_num" property="ordersNum"/>
+		<result column="orders_state" property="ordersState"/>
+		<result column="ctime" property="ctime"/>
+	</resultMap>
+	
+	<!-- 动态分辨是哪一张商品表 -->
+	<sql id="know_table">
+		<if test="productType=='二级服务'">
+			serve tb WHERE tb.sid=#{productId} 
+		</if>
+		<if	test="productType=='场地'">
+			site tb WHERE tb.siid=#{productId} 
+		</if>
+		<if	test="productType=='场地布置'">
+			dec_product tb WHERE tb.dpid=#{productId} 
+		</if>
+	</sql>
+	<!-- 分页逻辑 -->
+	<sql id="page">
+		<if test="pageIndex!=null">
+			<if test="pageSize!=null">
+				ORDER BY sc.ctime DESC LIMIT #{pageIndex},#{pageSize} 
+			</if>
+		</if>
+	</sql>
+	
+<!-- has_user Start -->
+	<!-- 判断用户Id是否存在 -->	
+	<sql id="has_user_head">
+		<if test="userId!=null">
+			user u JOIN shop_cart sc ON u.id=sc.user_id
+		</if>
+		<if test="userId==null">
+			shop_cart sc
+		</if>
+	</sql>
+	<sql id="has_user_tail">
+		<if test="userId!=null">
+			u.id=#{userId} AND
+		</if>
+	</sql>
+<!-- has user End -->
+
+	<delete id="deleteById" parameterType="java.lang.Integer">
+		DELETE FROM shop_cart WHERE spid=#{spid}
+	</delete>
+	
+	<select id="findById" parameterType="java.lang.Integer" resultMap="OrdersDTOMap">
+		SELECT sc.*,i.*,u.* FROM shop_cart sc LEFT JOIN img i 
+		ON (i.product_id=sc.product_id AND i.product_type=sc.product_type)
+		JOIN user u ON sc.user_id=u.id 
+		WHERE sc.spid=#{scid} 
+	</select>
+	
+	<select id="listSiteShopCartByUserIdAndState" resultMap="OrdersDTOMap">
+		SELECT sc.*,i.*,s.title,s.price,s.num as has_number 
+		FROM 
+		<include refid="has_user_head"></include>
+		JOIN site s ON (sc.product_id=s.siid AND sc.product_type='场地') 
+		LEFT JOIN img i ON (i.product_id=s.siid AND i.product_type='场地') 
+		WHERE 
+		<include refid="has_user_tail"></include> 
+		sc.orders_state=#{ordersState}
+		<include refid="page"></include>
+	</select>
+	
+	<select id="listServeShopCartByUserIdAndStateAndServeType" resultMap="OrdersDTOMap">
+		SELECT sc.*,i.*,s.title,s.price,s.number as has_number 
+		FROM 
+		<include refid="has_user_head"></include>
+		JOIN serve s ON (sc.product_id=s.sid AND sc.product_type='二级服务') 
+		LEFT JOIN img i ON (i.product_id=s.sid AND i.product_type='二级服务') 
+		WHERE <include refid="has_user_tail"></include> 
+		sc.orders_state=#{ordersState} AND s.type=#{serveType} 
+		<include refid="page"></include>
+	</select>
+	
+	<select id="listDecProductShopCartByUserIdAndState" resultMap="OrdersDTOMap">
+		SELECT sc.*,i.*,d.title,d.price,d.number as has_number 
+		FROM 
+		<include refid="has_user_head"></include> 
+		JOIN dec_product d ON (sc.product_id=d.dpid AND sc.product_type='场地布置') 
+		LEFT JOIN img i ON (i.product_id=d.dpid AND i.product_type='场地布置') 
+		WHERE 
+		<include refid="has_user_tail"></include>
+		sc.orders_state=#{ordersState} 
+		<include refid="page"></include>
+	</select>
+	<!-- 有问题 -->
+	<select id="countByStateAndUserId" resultType="java.lang.Integer">
+		SELECT COUNT(*) FROM user u JOIN shop_cart sc ON sc.user_id=u.id 
+		WHERE u.id=#{userId} AND sc.orders_state=#{ordersState}
+	</select>
+	
+	<update id="updateStateById" parameterType="java.lang.Integer">
+		UPDATE shop_cart SET orders_state=#{ordersState} WHERE spid=#{spid}
+	</update>
+	
+	<select id="findProductPriceByProductIdAndProductType" resultType="java.lang.Double">
+		SELECT tb.price FROM 
+		<include refid="know_table"></include>
+	</select>
+	
+	<select id="findByOrdersNum" resultMap="OrdersDTOMap" parameterType="java.lang.String"> 
+		SELECT sc.*,i.*,u.* FROM shop_cart sc LEFT JOIN img i 
+		ON (i.product_id=sc.product_id AND i.product_type=sc.product_type)
+		JOIN user u ON sc.user_id=u.id 
+		WHERE sc.orders_num=#{ordersNum}
+	</select>
+	
+	<select id="countByState" parameterType="java.lang.Integer" resultType="java.lang.Integer">
+		SELECT COUNT(*) FROM shop_cart sp WHERE sp.orders_state=#{ordersState}
+	</select>
+</mapper>

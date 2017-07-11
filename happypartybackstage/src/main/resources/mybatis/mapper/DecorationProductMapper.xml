@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<!-- author:Caizhf -->
+<!-- date:2017-6-21 -->
+<mapper namespace="com.party.decoration.mapper.DecorationProductMapper">
+
+	<!-- list专用 -->
+	<resultMap type="com.party.domain.DecorationProduct" id="listBaseMap">
+		<id column="dpid" property="dpid" />
+		<result column="title" property="title" />
+		<result column="description" property="description" />
+		<result column="number" property="number" />
+		<result column="price" property="price" />
+		<!-- 图片 -->
+		<collection property="imgs" ofType="com.party.domain.Img">
+			<id column="iid" property="iid" />
+			<result column="product_type" property="productType" />
+			<result column="product_id" property="productId" />
+			<result column="img_url" property="imgUrl" />
+		</collection>
+	</resultMap>
+
+	<!-- 精确查询专用 -->
+	<resultMap type="com.party.domain.DecorationProduct" id="baseMap" extends="listBaseMap">
+		<!-- 所属商家 -->
+		<association property="admin" javaType="com.party.domain.Admin">
+			<id column="aid" property="aid" />
+			<result column="account" property="account" />
+			<result column="phone_number" property="phoneNumber" />
+			<result column="email" property="email" />
+			<result column="cdate" property="cdate" />
+		</association>
+		<!-- 所属布置 -->
+		<association property="decoration" javaType="com.party.domain.Decoration">
+			<id column="did" property="did" />
+			<result column="dec_title" property="title" />
+			<result column="city" property="city" />
+			<result column="tags" property="tags" />
+			<result column="details" property="details" />
+			<result column="sequence" property="sequence" />
+		</association>
+		<!-- 所属板块 -->
+		<association property="productCategory" javaType="com.party.domain.DecorationProductCategory">
+			<id column="dcid" property="dcid"/>
+			<result column="cat_name" property="catName"/>
+		</association>
+	</resultMap>
+	
+	<!-- list基础查询 -->
+	<sql id="list">
+		SELECT * FROM dec_product dp LEFT JOIN img i
+		ON (dp.dpid=i.product_id AND i.product_type='布置商品')
+	</sql>
+	<!-- 分页逻辑 -->
+	<sql id="page">
+		<if test="startIndex!=null">
+			<if test="pageSize!=null">
+				LIMIT #{startIndex},#{pageSize}
+			</if>
+		</if>
+	</sql>
+	<sql id="likeByTitle">
+		<if test="key!=null">
+			WHERE dp.title LIKE CONCAT('%',#{key},'%')
+		</if>
+	</sql>
+	
+	<insert id="save" parameterType="com.party.domain.DecorationProduct">
+		<selectKey keyProperty="dpid" order="AFTER" resultType="int">
+			SELECT LAST_INSERT_ID()
+		</selectKey>
+		INSERT INTO dec_product(title,description,number,price,dec_pro_category_id,decoration_id) 
+		VALUES(#{title},#{description},#{number},#{price},#{productCategory.dcid},#{decoration.did})
+	</insert>	
+	
+	<delete id="deleteById" parameterType="java.lang.Integer">
+		DELETE FROM dec_product WHERE dpid=#{dpid}
+	</delete>
+	
+	<select id="findById" parameterType="java.lang.Integer" resultMap="baseMap">
+		SELECT dp.*,i.*,d.title as dec_title,d.city,d.tags,d.details,a.*
+		FROM dec_product dp LEFT JOIN img i
+		ON (dp.dpid=i.product_id AND i.product_type='布置商品')
+		JOIN decoration d ON(dp.decoration_id=d.did)
+		JOIN admin a ON a.aid=d.admin_id
+		WHERE dp.dpid=#{dpid}
+	</select>
+	
+	<update id="updateById" parameterType="com.party.domain.DecorationProduct">
+		UPDATE dec_product SET title=#{title},description=#{description},price=#{price},
+		number=#{number} WHERE dpid=#{dpid}
+	</update>
+	
+	<select id="countListDecorationProductByDecorationId" parameterType="int" resultType="int">
+		SELECT COUNT(*) FROM dec_product dp JOIN decoration d
+		ON(dp.decoration_id=d.did)
+		WHERE d.did=#{did}
+	</select>
+	
+	<select id="listDecorationProductByDecorationId" parameterType="int" resultMap="listBaseMap">
+		SELECT dp.*,i.*,d.title as dec_title,d.city,d.tags,d.details FROM dec_product dp LEFT JOIN img i
+		ON (dp.dpid=i.product_id AND i.product_type='布置商品')
+		JOIN decoration d ON(dp.decoration_id=d.did)
+		WHERE d.did=#{did}
+		<include refid="page"></include>		
+	</select>
+	
+	<select id="countListDecorationProductByCategoryId" parameterType="int" resultType="int">
+		SELECT COUNT(*) FROM dec_product dp JOIN dec_pro_category dpc
+		ON dp.dec_pro_category_id=dpc.dcid WHERE dpc.dcid=#{dcid}
+	</select>
+	
+	<select id="listDecorationProductByCategoryId" parameterType="int" resultMap="listBaseMap">
+		<include refid="list"></include>
+		JOIN dec_pro_category dpc ON dp.dec_pro_category_id=dpc.dcid
+		WHERE dpc.dcid=#{dcid}
+		<include refid="page"></include>
+	</select>
+	
+	<select id="countList" parameterType="java.lang.String" resultType="int">
+		SELECT COUNT(*) FROM dec_product dp
+		<include refid="likeByTitle"></include>
+	</select>
+	
+	<select id="listDecorationProductOrByLikeTitle" parameterType="java.lang.String" resultMap="listBaseMap">
+		<include refid="list"></include>
+		<include refid="likeByTitle"></include>
+		<include refid="page"></include>
+	</select>
+	
+	<update id="removeForeignKeyOnDecorationById">
+		UPDATE dec_product SET decoration_id=#{state}
+		WHERE dpid=#{dpid}
+	</update>
+	
+</mapper>

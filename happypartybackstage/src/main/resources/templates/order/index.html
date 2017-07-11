@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<title>服务管理</title>
+	<link rel="stylesheet" href="plugins/layui/css/layui.css" media="all" />
+	<link rel="stylesheet" href="css/global.css" media="all">
+	<link rel="stylesheet" href="plugins/font-awesome/css/font-awesome.min.css">
+	<link rel="stylesheet" href="css/table.css" />
+</head>
+
+<body>
+
+	<div class="admin-main">
+		<blockquote class="layui-elem-quote">
+			<form class="layui-form" method="get" action="" enctype="multipart/form-data" class="layui-form">
+
+				<div class="layui-form-item" style="margin:0;display:inline-block;">
+					<label class="layui-form-label">状态</label>
+					<div class="layui-input-inline">
+						<div class="layui-input-inline" id="statusSelect">
+						</div>
+					</div>
+					<div class="layui-input-inline">
+						<input type="text" name="userId" placeholder="用户id" autocomplete="off" class="layui-input">
+					</div>
+					<div class="layui-input-inline">
+						<input type="text" name="orderNum" placeholder="订单号" autocomplete="off" class="layui-input">
+					</div>
+					<div class="layui-form-mid layui-word-aux" style="padding:0;">
+						<button lay-filter="search" class="layui-btn" id="search" lay-submit><i class="fa fa-search" aria-hidden="true"></i> 查询</button>
+					</div>
+				</div>
+			</form>
+		</blockquote>
+		<fieldset class="layui-elem-field">
+			<legend>订单列表</legend>
+			<div class="layui-field-box layui-form">
+				<table class="layui-table admin-table">
+					<thead>
+						<tr>
+							<th style="width: 30px;">id</th>
+							<th>订单号</th>
+							<th>商品</th>
+							<th>价格</th>
+							<th>数量</th>
+							<th>状态</th>
+							<th>时间</th>
+							<th>操作</th>
+						</tr>
+					</thead>
+					<tbody id="content">
+					</tbody>
+				</table>
+			</div>
+		</fieldset>
+		<div class="admin-table-page">
+			<div id="paged" class="page">
+
+			</div>
+		</div>
+	</div>
+
+	<!--模板-->
+	<script type="text/html" id="tpl_select">
+		<select name="status" lay-verify="required">
+				<option value="1" <% if($data.status==1) print("selected") %> >待支付</option>
+				<option value="2" <% if($data.status==2) print("selected") %> >待处理</option>
+				<option value="3" <% if($data.status==3) print("selected") %> >待使用</option>
+				<option value="4" <% if($data.status==4) print("selected") %> >已完成</option>
+				<option value="5" <% if($data.status==5) print("selected") %> >退款中</option>
+				<option value="6" <% if($data.status==6) print("selected") %> >已退款</option>
+				<option value="7" <% if($data.status==7) print("selected") %> >已取消</option>
+		</select>
+	</script>
+	<script type="text/html" id="tpl">
+		<%
+			for(var key in $data){
+				for(var i=0;i<$data[key].length;i++){
+		%>
+
+			<tr data-id="<%==$data[key][i].spid %>">
+				<td>
+					<%==$data[key][i].spid %>
+				</td>
+				<td>
+					<%==$data[key][i].ordersNum %>
+				</td>
+				<td>
+					<%==$data[key][i].title %>
+					(<a onclick="check(<%==$data[key][i].productId %>,'<%==$data[key][i].productType %>')">查看商品</a>)
+				</td>
+				<td>
+					<%==$data[key][i].price %>
+				</td>
+				<td>
+					<%==$data[key][i].number %>
+				</td>
+				<td>
+					<%
+						switch($data[key][i].ordersState){
+							case 1: print("未支付");break;
+							case 2: print("待处理");break;
+							case 3: print("待使用");break;
+							case 4: print("已完成");break;
+							case 5: print("退款中");break;
+							case 6: print("已退款");break;
+							case 7: print("已取消");break;
+						}
+					 %>
+				</td>
+				<td>
+					<%==$data[key][i].ctime%>
+				</td>
+				<td>
+					<%if($data[key][i].ordersState==2){%>
+							<a onclick="updateState(<%==$data[key][i].spid %>)" data-opt="del" class="layui-btn layui-btn layui-btn-mini">预约成功</a>
+					<%}%>
+					<a onclick="deleteData(<%==$data[key][i].spid %>)" data-opt="del" class="layui-btn layui-btn-danger layui-btn-mini">删除</a>
+				</td>
+			</tr>
+			<% } }%>
+	</script>
+	<script type="text/html" id="tpl_one">
+			<tr data-id="<%==$data.spid %>">
+				<td>
+					<%==$data.spid %>
+				</td>
+				<td>
+					<%==$data.ordersNum %>
+				</td>
+				<td>
+					<%==$data.title %>
+					(<a onclick="check(<%==$data.productId %>,'<%==$data.productContent %>')">查看商品</a>)
+				</td>
+				<td>
+					<%==$data.price %>
+				</td>
+				<td>
+					<%==$data.number %>
+				</td>
+				<td>
+					<%
+						switch($data.ordersState){
+							case 1: print("未支付");break;
+							case 2: print("待处理");break;
+							case 3: print("待使用");break;
+							case 4: print("已完成");break;
+							case 5: print("退款中");break;
+							case 6: print("已退款");break;
+							case 7: print("已取消");break;
+						}
+					 %>
+				</td>
+				<td>
+					<%==$data.ctime%>
+				</td>
+				<td>
+					<a onclick="deleteData(<%==$data.spid %>)" data-opt="del" class="layui-btn layui-btn-danger layui-btn-mini">删除</a>
+				</td>
+			</tr>
+	</script>
+	<script type="text/javascript" src="plugins/layui/layui.js"></script>
+	<script type="text/javascript" src="js/template.js"></script>
+	<script type="text/javascript" src="js/public.js"></script>
+	<script type="text/javascript" src="js/jquery.min.js"></script>
+	<script>
+		var data;
+		var page = 1;
+		var size = 10;
+		//initPage(page,size);
+		var pageData;
+		var status = getUrlParam("status");
+		var userId = getUrlParam("userId");
+		var orderNum = getUrlParam("orderNum");
+		var selectSata = {
+			status:status
+		};
+		statusSelect = template("tpl_select", selectSata);
+		document.getElementById("statusSelect").innerHTML = statusSelect;
+
+		layui.use(['laypage', 'layer', 'element', 'form'], function() {
+			var form = layui.form();
+			var laypage = layui.laypage,
+				layer = layui.layer;
+			var $ = layui.jquery;
+			var totalPage = getPage(size);
+			laypage({
+				cont: 'paged',
+				pages: totalPage,
+				skip: true,
+				jump: function(obj, first) {
+					initPage(obj.curr, size);
+				}
+			});
+		});
+
+		function initPage(page, size) {
+			console.log(orderNum+"---");
+			if(orderNum!=null && orderNum!=''){
+				var url = "/admin/orders/get?ordersNum="+orderNum;
+				$("input[name='orderNum']").val(orderNum);
+
+				$.ajax({
+					url: url,
+					dataType: 'json',
+					async: false,
+					success: function(response) {
+						if (response.code == 200) {
+							data = response;
+							for(var key in data.result){
+								for(var i=0;i<data.result[key].length;i++){
+									data.result[key][i].ctime = new Date(data.result[key][i].ctime).format("YYYY-MM-dd");
+								}
+							}
+						}
+					}
+				});
+				var html = template('tpl_one', data.result);
+				document.getElementById('content').innerHTML = html;
+				return;
+			}else if(userId!=null && userId!=''){
+
+				var url = '/admin/orders/list/user/'+page+'?ordersState='+status+'&pageSize='+size+'&userId='+userId;
+				$("input[name='userId']").val(userId);
+
+			}else{
+				var url = '/admin/orders/list/'+page+'?ordersState='+status+'&pageSize='+size;
+			}
+
+			$.ajax({
+				url: url,
+				dataType: 'json',
+				async: false,
+				success: function(response) {
+					if (response.code == 200) {
+						data = response;
+						for(var key in data.result){
+							for(var i=0;i<data.result[key].length;i++){
+								data.result[key][i].ctime = new Date(data.result[key][i].ctime).format("YYYY-MM-dd");
+							}
+						}
+					}
+				}
+			});
+			var html = template('tpl', data.result);
+			document.getElementById('content').innerHTML = html;
+		}
+
+		function getPage(size) {
+			var totalPage;
+			if(userId!=null && userId!=''){
+				var url = '/admin/orders/list/user/'+page+'?ordersState='+status+'&pageSize='+size+'&userId='+userId;
+			}else{
+				var url = '/admin/orders/list/'+page+'?ordersState='+status+'&pageSize='+size;
+			}
+
+			$.ajax({
+				url: url,
+				dataType: 'json',
+				async: false,
+				success: function(response) {
+					totalPage = response.result.totlepage;
+
+				}
+			});
+			return totalPage;
+		}
+
+		function deleteData(id) {
+			layer.open({
+				content: '你确定要删除么?',
+				btn: ['确定', '取消'],
+				yes: function(index, layero) {
+					//按钮【按钮一】的回调
+					$.ajax({
+						url: '/admin/orders/delete/' + id,
+						dataType: 'json',
+						async: false,
+						success: function(response) {
+							layer.close(index);
+							if (response.code == 200) {
+								toast("成功");
+								$("tr[data-id='" + id + "']").hide();
+							} else {
+								toast("失败");
+							}
+						}
+					});
+
+				}
+			});
+		}
+
+		function updateState(id) {
+			layer.open({
+				content: '你确定要改为预约成功?',
+				btn: ['确定', '取消'],
+				yes: function(index, layero) {
+					//按钮【按钮一】的回调
+					$.ajax({
+						url: '/admin//orders/update?state=3&spid=' + id,
+						dataType: 'json',
+						async: false,
+						success: function(response) {
+							layer.close(index);
+							if (response.code == 200) {
+								toast("删除成功");
+								$("tr[data-id='" + id + "']").hide();
+							} else {
+								toast("删除失败");
+							}
+						}
+					});
+
+				}
+			});
+		}
+
+		function check(id,type) {
+			var base = "http://"+document.domain+":8080/";
+			if(type=="场地"){
+				var url = base+"site/detail?id="+id;
+			}
+			if(type=="聚会套餐"){
+				var url = base+"meal/detail?id="+id;
+			}
+			if(type=="二级服务"){
+				var url = base+"service/detail?sid="+id;
+			}
+			layer.open({
+				title:"查看商品",
+				type: 2,
+				content:url,
+				area:["350px","600px"],
+			});
+		}
+
+	</script>
+</body>
+
+
+
+</div>
+
+</html>

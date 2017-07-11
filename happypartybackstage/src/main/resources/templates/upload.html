@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:th="http://www.thymeleaf.org"
+	xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity3">
+<head>
+</head>
+<body>
+	<h1>测试增加：</h1>
+	<form method="post" enctype="multipart/form-data" th:action="@{/image/add}">
+		图片: <input type="file" name="image" /><br />
+		产品类型：	<input type="text" name="productType" />
+		产品id：	<input type="text" name="productId" />
+		 <input type="submit" value="上传" />
+	</form>
+	<h1>测试修改：</h1>
+	<form method="post" enctype="multipart/form-data" th:action="@{/image/update}">
+		图片: <input type="file" name="image" /><br />
+		图片id：	<input type="text" name="iid" />
+		 <input type="submit" value="修改" />
+	</form>
+	<h1>测试上传简单图片不存储入数据库</h1>
+	<form method="post" enctype="multipart/form-data" th:action="@{/image/simple/upload}">
+		图片: <input type="file" name="file" /><br />
+		 <input type="submit" value="上传简单图片" />
+	</form>
+	<h1>测试轮播图片</h1>
+	<form method="post" enctype="multipart/form-data" th:action="@{/home/addPlay}">
+		图片: <input type="file" name="image" /><br />
+		 <input type="submit" value="上传简单图片" />
+	</form>
+</body>
+</html>

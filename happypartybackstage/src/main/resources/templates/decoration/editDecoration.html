@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>编辑场地布置</title>
+	<meta name="renderer" content="webkit">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="format-detection" content="telephone=no">
+	<link rel="stylesheet" th:href="@{/plugins/layui/css/layui.css}" media="all" />
+	<link rel="stylesheet" th:href="@{/plugins/font-awesome/css/font-awesome.min.css}">
+</head>
+
+<body>
+	<div style="margin: 15px;"  id="content">
+
+		<script type="text/html" id="tpl">
+			<fieldset class="layui-elem-field layui-field-title" style="margin-top: 20px;">
+				<legend>编辑场地布置</legend>
+			</fieldset>
+			<form class="layui-form" enctype="multipart/form-data" class="layui-form">
+				<div class="layui-form-item">
+					<label class="layui-form-label">标题</label>
+					<div class="layui-input-block">
+						<input type="text" value="<%==title%>" name="title" lay-verify="required" autocomplete="off" placeholder="请输入标题" class="layui-input">
+					</div>
+				</div>
+				<div class="layui-form-item">
+					<label class="layui-form-label">所在城市</label>
+					<div class="layui-input-inline">
+						<select name="city" lay-verify="required">
+		          <option value="">请选择城市</option>
+		            <option value="南宁" selected>南宁</option>
+		        </select>
+					</div>
+				</div>
+				<div class="layui-form-item">
+					<label class="layui-form-label">标签</label>
+					<div class="layui-inline">
+						<input type="text" value="" id="blurbLabel" autocomplete="off" placeholder="输入一个标签后点添加标签" class="layui-input">
+					</div>
+					<div class="layui-inline">
+						<div class="layui-btn" id="tabAdd">添加标签</div>
+					</div>
+				</div>
+				<div class="layui-form-item">
+					<div class="layui-input-block">
+						<div class="layui-tab" lay-filter="label" lay-allowClose="true">
+							<ul class="layui-tab-title">
+								<%
+									var tag = tags.split("|");
+									for(var i=0;i<tag.length;i++){
+								%>
+									<li lay-id=""><%==tag[i]%></li>
+								<%
+									}
+								%>
+							</ul>
+						</div>
+					</div>
+				</div>
+				<div class="layui-form-item layui-form-text">
+					<label class="layui-form-label">详细描述</label>
+					<div class="layui-input-block">
+						<textarea class="layui-textarea layui-hide" name="details" id="details">
+							<%==details%>
+						</textarea>
+					</div>
+				</div>
+				<div class="layui-form-item">
+					<div class="layui-input-block">
+						<button class="layui-btn" type="submit" lay-submit="" lay-filter="add">立即提交</button>
+					</div>
+				</div>
+			</form>
+	</div>
+	</script>
+	<script type="text/javascript" src="/admin/plugins/layui/layui.js"></script>
+	<script type="text/javascript" src="/admin/js/public.js"></script>
+	<script type="text/javascript" src="../../js/template.js"></script>
+	<script type="text/javascript" src="../../js/jquery.min.js"></script>
+	<script>
+		var id = getUrlParam("id");
+
+
+		$.ajax({
+			url: "/admin/dec/get/" + id,
+			anysc: false,
+			success: function(res) {
+				if (res.code == 200) {
+					var html = template('tpl', res.result);
+					document.getElementById('content').innerHTML = html;
+				}
+			}
+		});
+
+		layui.use(['form', 'layedit', 'laydate', 'element'], function() {
+			var form = layui.form(),
+				layer = layui.layer,
+				layedit = layui.layedit,
+				laydate = layui.laydate;
+			var $ = layui.jquery,
+				element = layui.element();
+
+
+			$("#tabAdd").click(function() {
+				var blurbLabel = $("#blurbLabel");
+				var value = blurbLabel.val();
+				var flag = false;
+				$(".layui-tab-title li").each(function() {
+					var tag = this.innerText.replace("ဆ", "");
+					if (value == tag) {
+						flag = true;
+					}
+				});
+				if (flag) {
+					toast("标签已经存在");
+					return;
+				}
+				if (value == null || value == "") {
+					toast("标签值不能为空");
+				} else {
+					element.tabAdd('label', {
+						title: value //用于演示
+					});
+				}
+				blurbLabel.val("");
+			});
+
+
+			layedit.set({
+				uploadImage: {
+					url: '/admin//image/simple/upload',
+					type: 'post',
+					data: 'image',
+					success: function(res) {
+						res = res.parseJSON();
+						console.log(res.result.imgUrl);
+					}
+				}
+			});
+			//创建一个编辑器
+			var details = layedit.build('details');
+			//自定义验证规则
+
+			form.verify({});
+
+
+			form.on('submit(add)', function(data) {
+				console.log(data);
+
+				var det = layedit.getContent(details);
+
+				var tags = "";
+				$(".layui-tab-title li").each(function() {
+					var tag = this.innerText.replace("ဆ", "");
+					tags += tag + "|";
+				});
+				tags = tags.slice(0, tags.length - 1);
+				var url = "/admin/dec/update?title=" + data.field.title + "&city=" + data.field.city + "&tags=" + tags  + "&did=" + id;
+
+				$.ajax({
+					url: url,
+					type: "post",
+					datatype: "json",
+					data:{
+						"details":det,
+					},
+					success: function(data) {
+						if (data.code == 200) {
+							toast("修改成功");
+						}else{
+							toast("修改失败");
+						}
+					}
+				});
+				return false;
+			});
+		});
+	</script>
+</body>
+
+</html>

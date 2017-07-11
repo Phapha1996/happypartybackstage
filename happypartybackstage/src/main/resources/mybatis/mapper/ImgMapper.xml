@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<!-- author:Caizhf -->
+<!-- createDate:2017-5-20 -->
+<!-- email:1115054416@qq.com  -->
+<!-- 图片的Mapper -->
+
+<mapper namespace="com.party.product.mapper.ImgMapper">
+	<resultMap type="com.party.domain.Img" id="BaseMap">
+		<id column="iid" property="iid"/>
+		<result column="img_url" property="imgUrl"/>
+		<result column="product_type" property="productType"/>
+		<result column="product_id" property="productId"/>
+		<result column="img_disk_url" property="diskUrl"/>
+	</resultMap>
+	
+	<insert id="save" parameterType="com.party.domain.Img">
+		INSERT INTO img(product_type,product_id,img_url,img_disk_url)
+		VALUES(#{productType},#{productId},#{imgUrl},#{diskUrl})
+	</insert>
+	
+	<select id="findById" parameterType="int" resultMap="BaseMap">
+		SELECT * FROM img i WHERE i.iid=#{iid}
+	</select>	
+	
+	<delete id="deleteById" parameterType="int">
+		DELETE FROM img WHERE iid=#{iid}
+	</delete>
+	
+	<update id="updateUrlById">
+		UPDATE img SET img_url=#{imgUrl} ,img_disk_url=#{diskUrl} WHERE iid=#{iid}
+	</update>
+</mapper>

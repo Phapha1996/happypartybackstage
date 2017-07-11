@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>编辑场地</title>
+	<meta name="renderer" content="webkit">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="format-detection" content="telephone=no">
+	<link rel="stylesheet" th:href="@{/plugins/layui/css/layui.css}" media="all" />
+	<link rel="stylesheet" th:href="@{/plugins/font-awesome/css/font-awesome.min.css}">
+</head>
+
+<body>
+	<div style="margin: 15px;" id="content">
+
+	</div>
+	<script type="text/html" id="tpl">
+		<fieldset class="layui-elem-field layui-field-title" style="margin-top: 20px;">
+			<legend>添加场地</legend>
+		</fieldset>
+		<form class="layui-form" enctype="multipart/form-data" class="layui-form">
+			<div class="layui-form-item">
+				<label class="layui-form-label">标题</label>
+				<div class="layui-input-block">
+					<input type="text" value="<%==title%>" name="title" lay-verify="required" autocomplete="off" placeholder="请输入标题" class="layui-input">
+				</div>
+			</div>
+			<div class="layui-form-item">
+				<label class="layui-form-label">价格</label>
+				<div class="layui-input-block">
+					<input type="text" name="price" value="<%==price%>" lay-verify="required|price" autocomplete="off" placeholder="请输入价格" class="layui-input">
+				</div>
+			</div>
+			<div class="layui-form-item">
+				<label class="layui-form-label">所在城市</label>
+				<div class="layui-input-inline">
+					<select name="city" lay-verify="required">
+							<option value="">请选择城市</option>
+								<option value="南宁" selected>南宁</option>
+						</select>
+				</div>
+			</div>
+			<div class="layui-form-item">
+				<label class="layui-form-label">地址</label>
+				<div class="layui-input-block">
+					<input type="text" value="<%==address%>" name="address" lay-verify="required" autocomplete="off" placeholder="请输入地址" class="layui-input">
+				</div>
+			</div>
+			<div class="layui-form-item">
+				<label class="layui-form-label">房间数</label>
+				<div class="layui-input-block">
+					<input type="text" value="<%==roomNum%>" name="roomNum" lay-verify="number" autocomplete="off" placeholder="请输入房间数" class="layui-input">
+				</div>
+			</div>
+			<div class="layui-form-item">
+				<label class="layui-form-label">床位数</label>
+				<div class="layui-input-block">
+					<input type="text" value="<%==bedNum%>" name="bedNum" lay-verify="number" autocomplete="off" placeholder="请输入床位数" class="layui-input">
+				</div>
+			</div>
+			<div class="layui-form-item">
+				<label class="layui-form-label">适用人数</label>
+				<div class="layui-input-block">
+					<input type="text" value="<%==apply%>" name="apply" lay-verify="number" autocomplete="off" placeholder="请输入适用人数" class="layui-input">
+				</div>
+			</div>
+			<div class="layui-form-item">
+				<label class="layui-form-label">场地数量</label>
+				<div class="layui-input-block">
+					<input type="text" value="<%==num%>" name="num" lay-verify="number" autocomplete="off" placeholder="请输入场地数量" class="layui-input">
+				</div>
+			</div>
+			<div class="layui-form-item">
+				<div class="layui-form-item">
+					<label class="layui-form-label">配套实施</label>
+					<div class="layui-input-block">
+						<% var fac = facilities.split("|"); %>
+							<input type="checkbox" name="facilities[1]" <% if(fac.indexOf( "1")!=-1) print( "checked") %> lay-filter="facilities" value="1" title="空调">
+							<input type="checkbox" name="facilities[2]" <% if(fac.indexOf( "2")!=-1) print( "checked") %> lay-filter="facilities" value="2" title="浴室">
+							<input type="checkbox" name="facilities[3]" <% if(fac.indexOf( "3")!=-1) print( "checked") %> lay-filter="facilities" value="3" title="电磁炉">
+							<input type="checkbox" name="facilities[4]" <% if(fac.indexOf( "4")!=-1) print( "checked") %> lay-filter="facilities" value="4" title="电饭煲">
+							<input type="checkbox" name="facilities[5]" <% if(fac.indexOf( "5")!=-1) print( "checked") %> lay-filter="facilities" value="5" title="冰箱">
+							<input type="checkbox" name="facilities[6]" <% if(fac.indexOf( "6")!=-1) print( "checked") %> lay-filter="facilities" value="6" title="电吹风">
+							<input type="checkbox" name="facilities[7]" <% if(fac.indexOf( "7")!=-1) print( "checked") %> lay-filter="facilities" value="7" title="热水壶">
+							<input type="checkbox" name="facilities[8]" <% if(fac.indexOf( "8")!=-1) print( "checked") %> lay-filter="facilities" value="8" title="厨房">
+							<input type="checkbox" name="facilities[9]" <% if(fac.indexOf( "9")!=-1) print( "checked") %> lay-filter="facilities" value="9" title="麻将">
+							<input type="checkbox" name="facilities[10]" <% if(fac.indexOf( "10")!=-1) print( "checked") %> lay-filter="facilities" value="10" title="厨具">
+							<input type="checkbox" name="facilities[11]" <% if(fac.indexOf( "11")!=-1) print( "checked") %> lay-filter="facilities" value="11" title="拖鞋">
+							<input type="checkbox" name="facilities[12]" <% if(fac.indexOf( "12")!=-1) print( "checked") %> lay-filter="facilities" value="12" title="停车位">
+							<input type="checkbox" name="facilities[13]" <% if(fac.indexOf( "13")!=-1) print( "checked") %> lay-filter="facilities" value="13" title="电视机">
+							<input type="checkbox" name="facilities[14]" <% if(fac.indexOf( "14")!=-1) print( "checked") %> lay-filter="facilities" value="14" title="洗漱用品">
+							<input type="checkbox" name="facilities[15]" <% if(fac.indexOf( "15")!=-1) print( "checked") %> lay-filter="facilities" value="15" title="wifi">
+					</div>
+				</div>
+			</div>
+			<div class="layui-form-item">
+				<label class="layui-form-label">标签</label>
+				<div class="layui-inline">
+					<input type="text" value="" id="blurbLabel" autocomplete="off" placeholder="输入一个标签后点添加标签" class="layui-input">
+				</div>
+				<div class="layui-inline">
+					<div class="layui-btn" id="tabAdd">添加标签</div>
+				</div>
+			</div>
+			<div class="layui-form-item">
+				<div class="layui-input-block">
+					<div class="layui-tab" lay-filter="label" lay-allowClose="true">
+						<ul class="layui-tab-title">
+							<%
+								var tag = tags.split("|");
+								for(var i=0;i<tag.length;i++){
+							%>
+								<li lay-id="">
+									<%==tag[i]%>
+								</li>
+								<%
+								}
+							%>
+						</ul>
+					</div>
+				</div>
+			</div>
+			<div class="layui-form-item layui-form-text">
+				<label class="layui-form-label">详细描述</label>
+				<div class="layui-input-block">
+					<textarea class="layui-textarea layui-hide" name="description" id="description">
+						<%==description%>
+					</textarea>
+				</div>
+			</div>
+			<div class="layui-form-item layui-form-text">
+				<label class="layui-form-label">补充介绍</label>
+				<div class="layui-input-block">
+					<textarea class="layui-textarea layui-hide" name="reference" id="reference">
+							<%==reference%>
+					</textarea>
+				</div>
+			</div>
+			<div class="layui-form-item layui-form-text">
+				<label class="layui-form-label">温馨提示</label>
+				<div class="layui-input-block">
+					<textarea class="layui-textarea layui-hide" name="remind" id="remind">
+						<%==remind%>
+					</textarea>
+				</div>
+			</div>
+			<div class="layui-form-item">
+				<div class="layui-input-block">
+					<button class="layui-btn" type="submit" lay-submit="" lay-filter="add">立即提交</button>
+				</div>
+			</div>
+		</form>
+	</script>
+	<script type="text/javascript" src="../plugins/layui/layui.js"></script>
+	<script type="text/javascript" src="../js/template.js"></script>
+	<script type="text/javascript" src="../js/public.js"></script>
+	<script type="text/javascript" src="../js/jquery.min.js"></script>
+	<script>
+		var id = getUrlParam("id");
+		var facilities;
+		$.ajax({
+			url: '/admin/site/get/' + id,
+			dataType: 'json',
+			async: false,
+			success: function(response) {
+				if (response.code == 200) {
+					var html = template('tpl', response.result);
+					document.getElementById('content').innerHTML = html;
+					facilities = response.result.facilities.split("|");
+				}
+			}
+		});
+
+		layui.use(['form', 'layedit', 'laydate', 'element'], function() {
+			var form = layui.form(),
+				layer = layui.layer,
+				layedit = layui.layedit,
+				laydate = layui.laydate;
+			var element = layui.element();
+
+			layedit.set({
+				uploadImage: {
+					url: '/admin//image/simple/upload',
+					type: 'post',
+					data: 'image',
+					success: function(res) {
+						res = res.parseJSON();
+						console.log(res.result.imgUrl);
+					}
+				}
+			});
+
+
+
+			$("#tabAdd").click(function() {
+				var blurbLabel = $("#blurbLabel");
+				var value = blurbLabel.val();
+				var flag = false;
+				$(".layui-tab-title li").each(function() {
+					var tag = this.innerText.replace("ဆ", "");
+					if (value == tag) {
+						flag = true;
+					}
+				});
+				if (flag) {
+					toast("标签已经存在");
+					return;
+				}
+				if (value == null || value == "") {
+					toast("标签值不能为空");
+				} else {
+					element.tabAdd('label', {
+						title: value //用于演示
+					});
+				}
+				blurbLabel.val("");
+			});
+
+			//创建一个编辑器
+			var description = layedit.build('description');
+			var reference = layedit.build('reference');
+			var remind = layedit.build('remind');
+			//自定义验证规则
+
+			form.verify({
+				price: function(value, item) {
+					if (isNaN(value)) {
+						return "价格格式不正确";
+					}
+				}
+			});
+
+
+			form.on("checkbox(facilities)", function(data) {
+				if (data.elem.checked && facilities.indexOf(data.value) == -1) {
+					facilities.push(data.value);
+				}
+
+				if (!data.elem.checked && facilities.indexOf(data.value) != -1) {
+					facilities.splice(facilities.indexOf(data.value), 1);
+				}
+				//console.log(facilities);
+			});
+
+
+
+			form.on('submit(add)', function(data) {
+				console.log(data);
+
+				var des = layedit.getContent(description);
+				var ref = layedit.getContent(reference);
+				var rem = layedit.getContent(remind);
+
+				var fac = "";
+				for (var i = 0; i < facilities.length; i++) {
+					fac += facilities[i];
+					if (i != facilities.length - 1) {
+						fac += "|";
+					}
+				}
+
+				var tags = "";
+				$(".layui-tab-title li").each(function() {
+					var tag = this.innerText.replace("ဆ", "");
+					tags += tag + "|";
+				});
+				tags = tags.slice(0, tags.length - 1);
+
+				var url = "/admin/site/update?title=" + data.field.title + "&price=" + data.field.price + "&city=" + data.field.city + "&address=" + data.field.address + "&roomNum=" + data.field.roomNum + "&bedNum=" + data.field.bedNum + "&apply=" + data.field
+					.apply + "&tags=" + tags + "&num=" + data.field.num + "&siid=" + id;
+
+				$.ajax({
+					url: url,
+					type: "post",
+					datatype: "json",
+					data: {
+						"description": des,
+						"facilities": fac,
+						"reference": ref,
+						"remind": rem
+					},
+					success: function(data) {
+						if (data.code == 200) {
+							toast("修改成功");
+						} else {
+							toast("修改失败");
+						}
+					}
+				});
+
+				return false;
+			});
+		});
+	</script>
+
+</body>
+
+</html>

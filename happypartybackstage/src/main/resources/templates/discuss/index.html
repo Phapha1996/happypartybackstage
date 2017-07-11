@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<title>评价管理</title>
+	<link rel="stylesheet" href="plugins/layui/css/layui.css" media="all" />
+	<link rel="stylesheet" href="css/global.css" media="all">
+	<link rel="stylesheet" href="plugins/font-awesome/css/font-awesome.min.css">
+	<link rel="stylesheet" href="css/table.css" />
+</head>
+
+<body>
+	<div class="admin-main">
+		<blockquote class="layui-elem-quote">
+			<button type="button" style="visibility:hidden;" class="layui-btn layui-btn-small"><i class="fa fa-plus" aria-hidden="true"></i>添加</button>
+			<form class="layui-form" style="float:right;" method="get" action="">
+				<div class="layui-form-item" style="margin:0;">
+					<label class="layui-form-label">内容</label>
+					<div class="layui-input-inline">
+						<input type="text" name="key" placeholder="输入内容关键字" autocomplete="off" class="layui-input">
+					</div>
+					<div class="layui-form-mid layui-word-aux" style="padding:0;">
+						<button lay-filter="search" class="layui-btn" id="search" lay-submit><i class="fa fa-search" aria-hidden="true"></i> 查询</button>
+					</div>
+				</div>
+			</form>
+		</blockquote>
+		<fieldset class="layui-elem-field">
+			<legend>评价列表</legend>
+			<div class="layui-field-box layui-form">
+				<table class="layui-table admin-table">
+					<thead>
+						<tr>
+							<th style="width: 30px;">id</th>
+							<th>内容</th>
+							<th>商品分类</th>
+							<th>商品</th>
+							<th>评价用户</th>
+							<th>时间</th>
+							<th>操作</th>
+						</tr>
+					</thead>
+					<tbody id="content">
+					</tbody>
+				</table>
+			</div>
+		</fieldset>
+		<div class="admin-table-page">
+			<div id="paged" class="page">
+
+			</div>
+		</div>
+	</div>
+
+	<!--模板-->
+	<script type="text/html" id="tpl">
+		<% for(var i=0;i<$data.length;i++){ %>
+			<tr data-id="<%==$data[i].did %>">
+				<td>
+					<%==$data[i].did %>
+				</td>
+				<td>
+					<%==$data[i].content %>
+				</td>
+				<td>
+					<%==$data[i].productType %>
+				</td>
+				<td>
+					<a onclick="check(<%==$data[i].productId %>,'<%==$data[i].productType %>')">查看商品</a>
+				</td>
+				<td>
+					<%==$data[i].user.nickname %>
+				</td>
+				<td>
+					<%==$data[i].ctime %>
+				</td>
+				<td>
+					<a onclick="update(<%==$data[i].did %>,'<%==$data[i].content %>')" class="info layui-btn layui-btn-normal layui-btn-mini">编辑</a>
+					<a onclick="deleteData(<%==$data[i].did %>)" data-opt="del" class="layui-btn layui-btn-danger layui-btn-mini">删除</a>
+				</td>
+			</tr>
+			<% } %>
+	</script>
+	<script type="text/javascript" src="plugins/layui/layui.js"></script>
+	<script type="text/javascript" src="js/template.js"></script>
+	<script type="text/javascript" src="js/public.js"></script>
+	<script type="text/javascript" src="js/jquery.min.js"></script>
+	<script>
+		var data;
+		var page = 1;
+		var size = 10;
+		//initPage(page,size);
+		var pageData;
+		var key = getUrlParam("key");
+
+
+		layui.use(['laypage', 'layer', 'element'], function() {
+			var laypage = layui.laypage,
+				layer = layui.layer;
+			var $ = layui.jquery;
+			var totalPage = getPage(size);
+			laypage({
+				cont: 'paged',
+				pages: totalPage,
+				skip: true,
+				jump: function(obj, first) {
+					initPage(obj.curr, size);
+				}
+			});
+		});
+
+		function initPage(page, size) {
+			if (key != null && key!='') {
+				var url = '/admin/discuss/get/like/' + page + '/?key='+key+'&pageSize=' + size;
+				$("input[name='key']").val(key);
+			} else {
+				var url = '/admin/discuss/get/like/' + page + '/?key=&pageSize=' + size;
+			}
+			$.ajax({
+				url: url,
+				dataType: 'json',
+				async: false,
+				success: function(response) {
+					if (response.code == 200) {
+						data = response;
+						for (var i = 0; i < data.result.list.length; i++) {
+							data.result.list[i].ctime = new Date(data.result.list[i].ctime).format("YYYY-MM-dd");
+						}
+					}
+				}
+			});
+			var html = template('tpl', data.result.list);
+			document.getElementById('content').innerHTML = html;
+		}
+
+		function getPage(size) {
+			var totalPage;
+			if (key != null) {
+				var url = '/admin/discuss/get/like/' + page + '/?key='+key+'&pageSize=' + size;
+			} else {
+				var url = '/admin/discuss/get/like/' + page + '/?key=&pageSize=' + size;
+			}
+			$.ajax({
+				url: url,
+				dataType: 'json',
+				async: false,
+				success: function(response) {
+					totalPage = response.result.totlepage;
+
+				}
+			});
+			return totalPage;
+		}
+
+		function deleteData(id) {
+			layer.open({
+				content: '你确定要删除么?',
+				btn: ['确定', '取消'],
+				yes: function(index, layero) {
+					//按钮【按钮一】的回调
+					$.ajax({
+						url: '/admin/discuss/delete/' + id,
+						dataType: 'json',
+						async: false,
+						success: function(response) {
+							layer.close(index);
+							if (response.code == 200) {
+								toast("删除成功");
+								$("tr[data-id='" + id + "']").hide();
+							} else {
+								toast("删除失败");
+							}
+						}
+					});
+
+				}
+			});
+		}
+
+		function update(id,content) {
+			layer.open({
+				title:"修改评价",
+				content: '<textarea style="width:100%;height:80%;" id="discussContent">'+content+'</textarea>',
+				area:["500px","300px"],
+				btn: ['确定'],
+				yes: function(index, layero) {
+					$.ajax({
+						url: '/admin/discuss/update?content='+document.getElementById("discussContent").value+'&did=' + id,
+						dataType: 'json',
+						async: false,
+						success: function(response) {
+							layer.close(index);
+							if (response.code == 200) {
+								toast("修改成功");
+								location.reload();
+							} else {
+								toast("修改失败");
+							}
+						}
+					});
+				}
+			});
+		}
+
+		function check(id,type) {
+			var base = "http://"+document.domain+":8080/";
+			if(type=="场地"){
+				var url = base+"site/detail?id="+id;
+			}
+			if(type=="聚会套餐"){
+				var url = base+"meal/detail?id="+id;
+			}
+			if(type=="二级服务"){
+				var url = base+"service/detail?sid="+id;
+			}
+			
+			layer.open({
+				title:"查看商品",
+				type: 2,
+				content:url ,
+				area:["350px","600px"],
+			});
+		}
+	</script>
+</body>
+
+
+
+</div>
+
+</html>

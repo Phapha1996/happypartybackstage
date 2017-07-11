@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<title>场地图片管理</title>
+	<link rel="stylesheet" href="plugins/layui/css/layui.css" media="all" />
+	<link rel="stylesheet" href="css/aui.2.0.css" />
+	<link rel="stylesheet" href="css/global.css" media="all">
+	<link rel="stylesheet" href="plugins/font-awesome/css/font-awesome.min.css">
+	<link rel="stylesheet" href="css/table.css" />
+</head>
+
+<body>
+
+	<div class="admin-main">
+		<blockquote class="layui-elem-quote">
+			<div class="layui-box layui-upload-button">
+				<form target="layui-upload-iframe" method="post" key="set-mine" enctype="multipart/form-data" action="">
+					<input type="file" name="image" id="upFile" class="layui-upload-file">
+				</form>
+				<span class="layui-upload-icon">
+				<i class="layui-icon"></i>上传图片</span>
+			</div>
+
+		</blockquote>
+		<fieldset class="layui-elem-field">
+			<legend>图片管理</legend>
+			<div class="layui-field-box layui-form">
+				<!-- <table class="layui-table admin-table">
+					<thead>
+						<tr>
+							<th style="width: 30px;">序号</th>
+							<th>标题</th>
+							<th>价格</th>
+							<th>城市</th>
+							<th>地址</th>
+							<th>操作</th>
+						</tr>
+					</thead>
+					<tbody id="content">
+					</tbody>
+				</table> -->
+				<div id="content">
+				</div>
+			</div>
+		</fieldset>
+		<div class="admin-table-page">
+			<div id="paged" class="page">
+
+			</div>
+		</div>
+	</div>
+
+	<!--模板-->
+	<script type="text/html" id="tpl">
+		<div class="aui-row" style="text-align:center;">
+			<% for(var i=0;i<$data.length;i++){ %>
+				<div class="aui-col-xs-5" style="padding:10px;">
+					<div class="site-demo-upload" style="border-radius:0;width:480px;;height:320px;;background:none;">
+						<img id="LAY_demo_upload" src="<%==$data[i].imgUrl.replace('src/main/resources/static/','')%>" style="border-radius:0;width:100%;height:auto;">
+						<div class="site-demo-upbar">
+							<div class="layui-box layui-upload-button">
+								<span class="layui-upload-icon" onclick="deleteImg(<%==$data[i].iid%>)" style="cursor:pointer;">删除图片</span></div>
+						</div>
+					</div>
+				</div>
+				<% } %>
+		</div>
+
+	</script>
+	<script type="text/html" id="tpl_one">
+		<% if($data.img!=null){ %>
+		<div class="aui-row" style="text-align:center;">
+				<div class="aui-col-xs-5" style="padding:10px;">
+					<div class="site-demo-upload" style="border-radius:0;width:480px;;height:320px;;background:none;">
+						<img id="LAY_demo_upload" src="<%==$data.img.imgUrl.replace('src/main/resources/static/','')%>" style="border-radius:0;width:100%;height:auto;">
+						<div class="site-demo-upbar">
+							<div class="layui-box layui-upload-button">
+								<span class="layui-upload-icon" onclick="deleteImg(<%==$data.img.iid%>)" style="cursor:pointer;">删除图片</span></div>
+						</div>
+					</div>
+				</div>
+		</div>
+		<%}%>
+	</script>
+
+
+	<script type="text/javascript" src="plugins/layui/layui.js"></script>
+	<script type="text/javascript" src="js/template.js"></script>
+	<script type="text/javascript" src="js/public.js"></script>
+	<script type="text/javascript" src="js/jquery.min.js"></script>
+	<script type="text/javascript" src="js/ajaxfileupload.js"></script>
+	<script>
+		var data;
+		var id = getUrlParam("id");
+		var type = getUrlParam("type");
+		//initPage(page,size);
+		var pageData;
+		layui.use(['laypage', 'layer', 'element'], function() {
+			var laypage = layui.laypage,
+				layer = layui.layer;
+			var $ = layui.jquery;
+			initData();
+			// laypage({
+			// 	cont: 'paged',
+			// 	pages: 100,
+			// 	skip: true,
+			// 	jump: function(obj, first) {
+			// 		initPage(obj.curr, size);
+			// 	}
+			// });
+
+			document.getElementById("upFile").addEventListener("change", function(event) {
+				$.ajaxFileUpload({
+					url: '/admin/image/add?productType='+type+'&productId='+id,
+					secureuri: false,
+					fileElementId: 'upFile',
+					dataType: 'json',
+					success: function(data, status) {
+						location.reload();
+					},
+					error: function(data, status, e) {
+						console.log("error");
+						location.reload();
+					}
+				});
+			});
+		});
+
+		function initData() {
+			if(type=='site'){
+				var url = '/admin/site/get/'+id;
+			}else if(type=='二级服务'){
+				var url = '/admin/serve/get/'+id;
+			}else if(type=='主题'){
+				var url = '/admin/dectheme/get/'+id;
+				getOne(url);
+				return;
+			}else if(type=='套餐类型'){
+							var url = '/admin/meal/cat/get/'+id;
+			}else if(type=='布置'){
+				var url = '/admin/dec/get/'+id;
+			}else if(type=='布置商品'){
+				var url = '/admin/dec/pro/get/'+id;
+			}else if(type=='聚会套餐'){
+				var url = '/admin/meal/get/'+id;
+			}else if(type=='帖子'){
+					var url = '/admin/topic/get/'+id;
+			}
+			getList(url);
+
+		}
+
+		function getList(url){
+			$.ajax({
+				url:url,
+				dataType: 'json',
+				async: false,
+				success: function(response) {
+					if (response.code == 200) {
+						var html = template('tpl', response.result.imgs);
+						document.getElementById('content').innerHTML = html;
+					}
+				}
+			});
+		}
+
+		function getOne(url){
+			$.ajax({
+				url:url,
+				dataType: 'json',
+				async: false,
+				success: function(response) {
+					if (response.code == 200) {
+						var html = template('tpl_one', response.result);
+						document.getElementById('content').innerHTML = html;
+					}
+				}
+			});
+		}
+
+
+		function deleteImg(id) {
+			layer.open({
+				content: '你确定要删除么?',
+				btn: ['确定', '取消'],
+				yes: function(index, layero) {
+					//按钮【按钮一】的回调
+					$.ajax({
+						url: '/admin/image/delete/' + id,
+						dataType: 'json',
+						async: false,
+						success: function(response) {
+							layer.close(index);
+							if (response.code == 200) {
+								toast("删除成功");
+								location.reload();
+							} else {
+								toast("删除失败");
+							}
+						}
+					});
+
+				}
+			});
+		}
+
+		function deleteData(id) {
+			layer.open({
+				content: '你确定要删除么?',
+				btn: ['确定', '取消'],
+				yes: function(index, layero) {
+					//按钮【按钮一】的回调
+					$.ajax({
+						url: '/admin/site/delete/' + id,
+						dataType: 'json',
+						async: false,
+						success: function(response) {
+							layer.close(index);
+							if (response.code == 200) {
+								toast("删除成功");
+								$("tr[data-id='" + id + "']").hide();
+							} else {
+								toast("删除失败");
+							}
+						}
+					});
+
+				}
+			});
+		}
+	</script>
+</body>
+
+</html>

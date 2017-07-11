@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+
+<mapper namespace="com.party.user.mapper.SysAdminMapper">
+	<resultMap type="com.party.domain.Admin" id="BaseMapped">
+		<id column="aid" property="aid"/>
+		<result column="account" property="account"/>
+		<result column="password" property="password"	/>
+		<result column="phone_number" property="phoneNumber"/>
+		<result column="email" property="email"/>
+		<result column="cdate" property="cdate"/>
+		<collection property="roles" ofType="com.party.domain.Role">
+			<id column="roid" property="roid"/>
+			<result column="role_name" property="roleName"/>
+		</collection>
+	</resultMap>
+	<!-- 把角色也映射 -->
+	<select id="findByAccount" parameterType="java.lang.String" resultMap="BaseMapped" >
+		SELECT a.*,r.* FROM admin a 
+		LEFT JOIN admin_role ar ON a.aid=ar.admin_id
+		LEFT JOIN role r ON r.roid=ar.role_id
+		WHERE account=#{account}
+	</select>
+</mapper>

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<title>服务管理</title>
+	<link rel="stylesheet" href="plugins/layui/css/layui.css" media="all" />
+	<link rel="stylesheet" href="css/global.css" media="all">
+	<link rel="stylesheet" href="plugins/font-awesome/css/font-awesome.min.css">
+	<link rel="stylesheet" href="css/table.css" />
+</head>
+
+<body>
+
+	<div class="admin-main">
+		<blockquote class="layui-elem-quote">
+			<button type="button" id="addView" class="layui-btn layui-btn-small" ><i class="fa fa-plus" aria-hidden="true"></i>添加</button>
+			<button type="button" id="cotegory" class="layui-btn layui-btn-small"  >分类管理</button>
+			<form class="layui-form" style="float:right;" method="get" action="">
+				<div class="layui-form-item" style="margin:0;">
+					<label class="layui-form-label">标题</label>
+					<div class="layui-input-inline">
+						<input type="hidden" name="type" id="typeInput"  autocomplete="off" class="layui-input">
+						<input type="text" name="key" placeholder="输入标题关键字" autocomplete="off" class="layui-input">
+					</div>
+					<div class="layui-form-mid layui-word-aux" style="padding:0;">
+						<button lay-filter="search" class="layui-btn" id="search" lay-submit><i class="fa fa-search" aria-hidden="true"></i> 查询</button>
+					</div>
+				</div>
+			</form>
+		</blockquote>
+		<fieldset class="layui-elem-field">
+			<legend>场地列表</legend>
+			<div class="layui-field-box layui-form">
+				<table class="layui-table admin-table">
+					<thead>
+						<tr>
+							<th style="width: 30px;">排序</th>
+							<th style="width: 30px;">id</th>
+							<th>标题</th>
+							<th>价格</th>
+							<th>城市</th>
+							<th>所属分类</th>
+							<th>微信</th>
+							<th>操作</th>
+						</tr>
+					</thead>
+					<tbody id="content">
+					</tbody>
+				</table>
+			</div>
+		</fieldset>
+		<div class="admin-table-page">
+			<div id="paged" class="page">
+
+			</div>
+		</div>
+	</div>
+
+	<!--模板-->
+	<script type="text/html" id="tpl">
+		<% for(var i=0;i<$data.length;i++){ %>
+			<tr data-id="<%==$data[i].sid %>">
+				<td>
+					<%==$data[i].sequence%>
+				</td>
+				<td>
+					<%==$data[i].sid %>
+				</td>
+				<td>
+					<%==$data[i].title %>
+				</td>
+				<td>
+					<%==$data[i].price %>
+				</td>
+				<td>
+					<%==$data[i].city %>
+				</td>
+				<td>
+					<%==$data[i].serveCategory.categoryName %>
+				</td>
+				<td>
+					<%==$data[i].wechat %>
+				</td>
+				<td>
+					<a href="/admin/service/edit?id=<%==$data[i].sid %>&type=<%==$data[i].type%>" class="info layui-btn layui-btn-normal layui-btn-mini">编辑内容</a>
+					<a href="/admin/img?&id=<%==$data[i].sid %>&type=二级服务" class="info layui-btn layui-btn layui-btn-mini">图片管理</a>
+					<a href="/admin/discuss/list?&id=<%==$data[i].sid %>&type=二级服务" class="info layui-btn layui-btn-primary layui-btn-mini">评价管理</a>
+					<a  onclick="sequence(<%==$data[i].sid %>,<%==$data[i].sequence%>)"  class="info layui-btn layui-btn-warm layui-btn-mini">排序</a>
+					<a onclick="deleteData(<%==$data[i].sid %>)" data-opt="del" class="layui-btn layui-btn-danger layui-btn-mini">删除</a>
+				</td>
+			</tr>
+			<% } %>
+	</script>
+	<script type="text/javascript" src="plugins/layui/layui.js"></script>
+	<script type="text/javascript" src="js/template.js"></script>
+	<script type="text/javascript" src="js/public.js"></script>
+	<script type="text/javascript" src="js/jquery.min.js"></script>
+	<script>
+		var data;
+		var page = 1;
+		var size = 10;
+		//initPage(page,size);
+		var pageData;
+		var type = getUrlParam("type");
+		var key = getUrlParam("key");
+
+		document.getElementById("typeInput").value = type;
+
+		document.getElementById("addView").onclick = function(){
+			location.href = "/admin/service/addview?type="+type;
+		};
+
+		document.getElementById("cotegory").onclick = function(){
+			location.href = "/admin/service/category?type="+type;
+		};
+
+
+		layui.use(['laypage', 'layer', 'element'], function() {
+			var laypage = layui.laypage,
+				layer = layui.layer;
+			var $ = layui.jquery;
+			var totalPage = getPage(size);
+			laypage({
+				cont: 'paged',
+				pages:totalPage,
+				skip: true,
+				jump: function(obj, first) {
+					initPage(obj.curr, size);
+				}
+			});
+		});
+
+		function initPage(page, size) {
+			if(key!=null){
+				var url = '/admin/serve/list/like/'+page+'?pageSize='+size+'&type='+type+'&key='+key;
+				$("input[name='key']").val(key);
+			}else{
+				var url = '/admin/serve/list/'+page+'?type='+type;
+			}
+			$.ajax({
+				url: url,
+				dataType: 'json',
+				async: false,
+				success: function(response) {
+					if (response.code == 200) {
+						data = response;
+					}
+				}
+			});
+			var html = template('tpl', data.result.list);
+			document.getElementById('content').innerHTML = html;
+		}
+
+		function getPage(size) {
+			var totalPage;
+			if(key!=null){
+				var url = '/admin/serve/list/like/1?pageSize='+size+'&type='+type+'&key='+key;
+			}else{
+				var url = '/admin/serve/list/1?type='+type;
+			}
+			$.ajax({
+				url: url,
+				dataType: 'json',
+				async: false,
+				success: function(response) {
+					totalPage = response.result.totlepage;
+
+				}
+			});
+			return totalPage;
+		}
+
+		function deleteData(id) {
+			layer.open({
+				content: '你确定要删除么?',
+				btn: ['确定', '取消'],
+				yes: function(index, layero) {
+					//按钮【按钮一】的回调
+					$.ajax({
+						url: '/admin/serve/delete/' + id,
+						dataType: 'json',
+						async: false,
+						success: function(response) {
+							layer.close(index);
+							if (response.code == 200) {
+								toast("删除成功");
+								$("tr[data-id='" + id + "']").hide();
+							} else {
+								toast("删除失败");
+							}
+						}
+					});
+
+				}
+			});
+		}
+
+		function sequence(id,sq){
+			layer.open({
+				title:"修改排序",
+				content:'排序号越大，前台显示越往前<br/><input type="text" id="seq" value="'+sq+'" name="title" lay-verify="required" autocomplete="off"  class="layui-input">',
+				btn: ['确定', '取消'],
+				yes: function(index, layero){
+					//按钮【按钮一】的回调
+					var seq = $("#seq").val();
+
+				}
+			});
+		}
+	</script>
+</body>
+
+
+
+</div>
+</html>

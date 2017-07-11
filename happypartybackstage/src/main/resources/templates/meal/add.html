@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>添加场地</title>
+	<meta name="renderer" content="webkit">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="format-detection" content="telephone=no">
+	<link rel="stylesheet" th:href="@{/plugins/layui/css/layui.css}" media="all" />
+	<link rel="stylesheet" th:href="@{/plugins/font-awesome/css/font-awesome.min.css}">
+</head>
+
+<body>
+	<div style="margin: 15px;">
+		<fieldset class="layui-elem-field layui-field-title" style="margin-top: 20px;">
+			<legend>添加套餐</legend>
+		</fieldset>
+		<form class="layui-form" enctype="multipart/form-data" class="layui-form">
+			<div class="layui-form-item">
+				<label class="layui-form-label">标题</label>
+				<div class="layui-input-block">
+					<input type="text" value="" name="title" lay-verify="required" autocomplete="off" placeholder="请输入标题" class="layui-input">
+				</div>
+			</div>
+			<div class="layui-form-item">
+				<label class="layui-form-label">类型</label>
+				<div class="layui-input-inline">
+					<select name="mealType" lay-verify="required">
+							<option value="">请选择类型</option>
+						</select>
+				</div>
+			</div>
+			<div class="layui-form-item">
+				<label class="layui-form-label">价格</label>
+				<div class="layui-input-block">
+					<input type="text" name="price" value="" lay-verify="required|price" autocomplete="off" placeholder="请输入价格" class="layui-input">
+				</div>
+			</div>
+			<div class="layui-form-item">
+				<label class="layui-form-label">所在城市</label>
+				<div class="layui-input-inline">
+					<select name="city" lay-verify="required">
+		          <option value="">请选择城市</option>
+		            <option value="南宁">南宁</option>
+		        </select>
+				</div>
+			</div>
+			<div class="layui-form-item">
+				<label class="layui-form-label">数量</label>
+				<div class="layui-input-block">
+					<input type="text" value="" name="num" lay-verify="number" autocomplete="off" placeholder="请输入套餐数量" class="layui-input">
+				</div>
+			</div>
+			<div class="layui-form-item">
+				<label class="layui-form-label">商家id</label>
+				<div class="layui-inline">
+					<input type="text" value="" name="aid" lay-verify="number" autocomplete="off" placeholder="请输入商家id" class="layui-input">
+				</div>
+				<div class="layui-inline" style="color:red;">
+					自己发表则输入1即可
+				</div>
+				<div class="layui-inline">
+					<div class="layui-btn" onclick="check()">查看商家</div>
+				</div>
+			</div>
+			<div class="layui-form-item">
+				<label class="layui-form-label">标签</label>
+				<div class="layui-inline">
+					<input type="text" value="" id="blurbLabel" autocomplete="off" placeholder="输入一个标签后点添加标签" class="layui-input">
+				</div>
+				<div class="layui-inline">
+					<div class="layui-btn" id="tabAdd">添加标签</div>
+				</div>
+			</div>
+			<div class="layui-form-item">
+				<div class="layui-input-block">
+					<div class="layui-tab" lay-filter="label" lay-allowClose="true">
+						<ul class="layui-tab-title">
+
+						</ul>
+					</div>
+				</div>
+			</div>
+			<div class="layui-form-item layui-form-text">
+				<label class="layui-form-label">详细描述</label>
+				<div class="layui-input-block">
+					<textarea class="layui-textarea layui-hide" name="description" id="description"></textarea>
+				</div>
+			</div>
+			<div class="layui-form-item layui-form-text">
+				<label class="layui-form-label">服务范围</label>
+				<div class="layui-input-block">
+					<textarea class="layui-textarea layui-hide" name="reference" id="reference"></textarea>
+				</div>
+			</div>
+			<div class="layui-form-item layui-form-text">
+				<label class="layui-form-label">温馨提示</label>
+				<div class="layui-input-block">
+					<textarea class="layui-textarea layui-hide" name="remind" id="remind"></textarea>
+				</div>
+			</div>
+			<div class="layui-form-item">
+				<div class="layui-input-block">
+					<input class="layui-btn" type="button" lay-submit="" lay-filter="add" value="立即提交">
+				</div>
+			</div>
+		</form>
+	</div>
+	<script type="text/html" id="typeTpl">
+		<% for(var i=0;i<$data.length;i++){ %>
+			<option value="<%==$data[i].mcid%>">
+				<%==$data[i].categoryName%>
+			</option>
+			<%}%>
+	</script>
+	<script type="text/javascript" src="/admin/plugins/layui/layui.js"></script>
+	<script type="text/javascript" src="../js/jquery.min.js"></script>
+	<script type="text/javascript" src="../js/template.js"></script>
+	<script type="text/javascript" src="/admin/js/public.js"></script>
+	<script>
+		$.ajax({
+			url: "/admin/meal/cat/list/1?pageSize=100",
+			datatype: "json",
+			success: function(data) {
+				var html = template('typeTpl', data.result.list);
+				var element = document.querySelector("select[name='mealType']");
+				element.innerHTML += html;
+			}
+		});
+		layui.use(['form', 'layedit', 'laydate', 'element'], function() {
+			var form = layui.form(),
+				layer = layui.layer,
+				layedit = layui.layedit,
+				laydate = layui.laydate;
+			var $ = layui.jquery,
+				element = layui.element();
+
+
+
+			$("#tabAdd").click(function() {
+				var blurbLabel = $("#blurbLabel");
+				var value = blurbLabel.val();
+				var flag = false;
+				$(".layui-tab-title li").each(function() {
+					var tag = this.innerText.replace("ဆ", "");
+					if (value == tag) {
+						flag = true;
+					}
+				});
+				if (flag) {
+					toast("标签已经存在");
+					return;
+				}
+				if (value == null || value == "") {
+					toast("标签值不能为空");
+				} else {
+					element.tabAdd('label', {
+						title: value //用于演示
+					});
+				}
+				blurbLabel.val("");
+			});
+
+
+			layedit.set({
+				uploadImage: {
+					url: '/admin//image/simple/upload',
+					type: 'post',
+					data: 'image',
+					success: function(res) {
+						res = res.parseJSON();
+						console.log(res.result.imgUrl);
+					}
+				}
+			});
+			//创建一个编辑器
+			var description = layedit.build('description');
+			var reference = layedit.build('reference');
+			var remind = layedit.build('remind');
+			//自定义验证规则
+
+			form.verify({
+				price: function(value, item) {
+					if (isNaN(value)) {
+						return "价格格式不正确";
+					}
+				}
+			});
+
+
+
+
+			form.on('submit(add)', function(data) {
+				console.log(data);
+
+				var des = layedit.getContent(description);
+				var ref = layedit.getContent(reference);
+				var rem = layedit.getContent(remind);
+
+
+				var tags = "";
+				$(".layui-tab-title li").each(function() {
+					var tag = this.innerText.replace("ဆ", "");
+					tags += tag + "|";
+				});
+				tags = tags.slice(0, tags.length - 1);
+
+				var fac = "";
+				var url = "/admin/meal/admin/add?title=" + data.field.title + "&price=" + data.field.price + "&city=" + data.field.city + "&tags=" + tags + "&num=" + data.field
+					.num + "&mealCategory.mcid=" + data.field.mealType + "&aid=" + data.field.aid;
+
+				$.ajax({
+					url: url,
+					type: "post",
+					datatype: "json",
+					data: {
+						"description": des,
+						"facilities": fac,
+						"reference": ref,
+						"remind": rem
+					},
+					success: function(data) {
+						if (data.code == 200) {
+							layer.open({
+								content: '添加成功去上传图片后就可以在前台显示',
+								btn: ['去上传图片', '取消'],
+								yes: function(index, layero) {
+									//按钮【按钮一】的回调
+									location.href = "/admin/img?type=聚会套餐&id=" + data.result;
+								}
+							});
+						}
+					}
+				});
+				return false;
+			});
+		});
+
+		function check() {
+			var url = "http://" + document.domain + "/admin/business";
+			layer.open({
+				title: "查看商家",
+				type: 2,
+				content: url,
+				area: ["1000px", "500px"],
+			});
+		}
+	</script>
+</body>
+
+</html>

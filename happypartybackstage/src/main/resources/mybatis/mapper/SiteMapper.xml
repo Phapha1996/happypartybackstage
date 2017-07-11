@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+
+<mapper namespace="com.party.product.mapper.SiteMapper">
+	<resultMap type="com.party.domain.Site" id="listBaseMap">
+		<id column="siid" property="siid" />
+		<result column="title" property="title" />
+		<result column="price" property="price" />
+		<result column="week_price" property="weekPrice"/>
+		<result column="city" property="city" />
+		<result column="address" property="address" />
+		<result column="room_num" property="roomNum" />
+		<result column="bed_num" property="bedNum" />
+		<result column="apply" property="apply" />
+		<result column="tags" property="tags" />
+		<result column="description" property="description" />
+		<result column="facilities" property="facilities" />
+		<result column="reference" property="reference" />
+		<result column="remind" property="remind" />
+		<result column="num" property="num" />
+		<result column="wechat" property="wechat"/>
+		<result column="sequence" property="sequence" />
+		<!-- 图片 -->
+		<collection property="imgs" ofType="com.party.domain.Img">
+			<id column="iid" property="iid" />
+			<result column="product_type" property="productType" />
+			<result column="product_id" property="productId" />
+			<result column="img_url" property="imgUrl" />
+		</collection>
+	</resultMap>
+	
+	<resultMap type="com.party.domain.Site" id="baseMap" extends="listBaseMap">
+		<!-- 映射商家 -->
+		<association property="admin" javaType="com.party.domain.Admin">
+			<id column="aid" property="aid" />
+			<result column="account" property="account" />
+			<result column="phone_number" property="phoneNumber" />
+			<result column="email" property="email" />
+			<result column="cdate" property="cdate" />
+		</association>
+	</resultMap>
+	
+	<!-- 根据排序序号排序的sql片段-->
+	<sql id="orderByandPage">
+		ORDER BY sequence DESC
+		LIMIT #{startIndex},#{pageSize}
+	</sql>
+	<!-- 级联admin表 -->
+	<sql id="joinAdmin">
+		<if test="adminId!=null">
+			JOIN admin a ON a.aid=s.admin_id
+		</if>
+	</sql>
+	<!-- 给予admin条件 -->
+	<sql id="whereAdmin">
+		<if test="adminId!=null">
+			WHERE a.aid=#{adminId}
+		</if>
+	</sql>
+
+	
+	<insert id="save" parameterType="com.party.domain.Site">
+		<!-- 在增加之后返回id给对象 -->
+    	<selectKey order="AFTER" keyProperty="siid" resultType="int">
+    		SELECT LAST_INSERT_ID()
+    	</selectKey>
+		INSERT INTO site(title,price,city,address,room_num,bed_num,apply,tags,description,facilities,reference,remind,num,admin_id,week_price) 
+		VALUES(#{title},#{price},#{city},#{address},#{roomNum},#{bedNum},#{apply},#{tags},#{description},#{facilities},#{reference},#{remind},#{num},#{admin.aid},#{weekPrice})
+	</insert>
+	
+	<delete id="deleteById" parameterType="int">
+		DELETE FROM site WHERE siid=#{siid}
+	</delete>
+	
+	<update id="updateById" parameterType="com.party.domain.Site">
+		UPDATE site SET title=#{title},price=#{price},city=#{city},address=#{address},
+		room_num=#{roomNum},bed_num=#{bedNum},apply=#{apply},tags=#{tags},description=#{description},
+		facilities=#{facilities},reference=#{reference},remind=#{remind},num=#{num}
+		WHERE siid=#{siid}
+	</update>
+	
+	<select id="findById" parameterType="int" resultMap="baseMap">
+		SELECT s.*,i.*,a.* FROM site s JOIN admin a
+		ON s.admin_id=a.aid LEFT JOIN img i
+		ON (i.product_type='site' AND product_id=s.siid)
+		WHERE s.siid=#{siid}
+	</select>
+	
+	<select id="countLikeByTitle" parameterType="java.lang.String" resultType="java.lang.Integer">
+		SELECT COUNT(*) FROM site s
+		WHERE s.title LIKE CONCAT('%',#{key},'%')
+	</select>
+
+	<select id="listLikeByTitle" resultMap="listBaseMap">
+		SELECT s.*,i.* FROM site s LEFT JOIN img i
+		ON (i.product_type='site' AND i.product_id=s.siid)
+		WHERE s.title LIKE CONCAT('%',#{key},'%')
+		<include refid="orderByandPage"></include>
+	</select>
+	
+	<select id="countList" resultType="int">
+		SELECT COUNT(*) FROM site s
+		<include refid="joinAdmin"></include>
+		<include refid="whereAdmin"></include>
+	</select>
+	
+	<select id="list" resultMap="listBaseMap">
+		SELECT s.*,i.* FROM site s LEFT JOIN img i
+		ON (i.product_type='site' AND i.product_id=s.siid)
+		<include refid="joinAdmin"></include>
+		<include refid="whereAdmin"></include>
+		<include refid="orderByandPage"></include>
+	</select>
+	
+	<update id="updateSequenceById" parameterType="java.lang.Integer">
+		UPDATE site SET sequence=#{sequence} WHERE siid=#{siid}
+	</update>
+</mapper>

@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<title>用户管理</title>
+	<link rel="stylesheet" href="plugins/layui/css/layui.css" media="all" />
+	<link rel="stylesheet" href="css/global.css" media="all">
+	<link rel="stylesheet" href="plugins/font-awesome/css/font-awesome.min.css">
+	<link rel="stylesheet" href="css/table.css" />
+</head>
+
+<body>
+	<div class="admin-main">
+		<blockquote class="layui-elem-quote">
+			<button type="button" style="visibility:hidden;" class="layui-btn layui-btn-small" onclick="location.href='/admin/user/addview'"><i class="fa fa-plus" aria-hidden="true"></i> 添加</button>
+			<form class="layui-form" style="float:right;" method="get" action="">
+				<div class="layui-form-item" style="margin:0;">
+					<label class="layui-form-label"></label>
+					<div class="layui-input-inline">
+						<input type="text" name="key" placeholder="输入邮箱或手机号" autocomplete="off" class="layui-input">
+					</div>
+					<div class="layui-form-mid layui-word-aux" style="padding:0;">
+						<button lay-filter="search" class="layui-btn" id="search" lay-submit><i class="fa fa-search" aria-hidden="true"></i> 查询</button>
+					</div>
+				</div>
+			</form>
+		</blockquote>
+		<fieldset class="layui-elem-field">
+			<legend>用户列表</legend>
+			<div class="layui-field-box layui-form">
+				<table class="layui-table admin-table">
+					<thead>
+						<tr>
+							<th style="width: 30px;">id</th>
+							<th>账号</th>
+							<th>姓名</th>
+							<th>注册时间</th>
+							<th>操作</th>
+						</tr>
+					</thead>
+					<tbody id="content">
+					</tbody>
+				</table>
+			</div>
+		</fieldset>
+		<div class="admin-table-page">
+			<div id="paged" class="page">
+
+			</div>
+		</div>
+	</div>
+
+	<!--模板-->
+	<script type="text/html" id="tpl">
+			<% for(var i=0;i<$data.length;i++){ %>
+				<tr data-id="<%==$data[i].id %>">
+					<td>
+					<%==$data[i].id%>
+					</td>
+					<td>
+						<%==$data[i].username %>
+					</td>
+					<td>
+						<%==$data[i].nickname %>
+					</td>
+					<td>
+						<%==$data[i].regdate %>
+					</td>
+					<td>
+						<a href="/admin/user/edit?id=<%==$data[i].id %>" class="info layui-btn layui-btn-normal layui-btn-mini">编辑</a>
+						<a onclick="deleteData(<%==$data[i].id %>)" data-opt="del" class="layui-btn layui-btn-danger layui-btn-mini">删除</a>
+					</td>
+				</tr>
+			<% } %>
+	</script>
+	<script type="text/html" id="tpl_one">
+				<tr data-id="<%==$data.id %>">
+					<td>
+					<%==$data.id%>
+					</td>
+					<td>
+						<%==$data.username %>
+					</td>
+					<td>
+						<%==$data.nickname %>
+					</td>
+					<td>
+						<%==$data.regdate %>
+					</td>
+					<td>
+						<a href="/admin/user/edit?id=<%==$data.id %>" class="info layui-btn layui-btn-normal layui-btn-mini">编辑</a>
+						<a onclick="deleteData(<%==$data.id %>)" data-opt="del" class="layui-btn layui-btn-danger layui-btn-mini">删除</a>
+					</td>
+				</tr>
+	</script>
+	<script type="text/javascript" src="plugins/layui/layui.js"></script>
+	<script type="text/javascript" src="js/template.js"></script>
+	<script type="text/javascript" src="js/public.js"></script>
+	<script type="text/javascript" src="js/jquery.min.js"></script>
+	<script>
+		var data;
+		var page = 1;
+		var size = 10;
+		//initPage(page,size);
+		var pageData;
+		var key = getUrlParam("key");
+
+
+		layui.use(['laypage', 'layer', 'element'], function() {
+			var laypage = layui.laypage,
+				layer = layui.layer;
+			var $ = layui.jquery;
+			// var totalPage = getPage(size);
+			 laypage({
+				cont: 'paged',
+				pages: 100,
+				skip: true,
+				jump: function(obj, first) {
+					initPage(obj.curr, size);
+
+				}
+			});
+		});
+
+		function initPage(page, size) {
+			if(key!=null && key!=""){
+				var url = '/admin/user/getUsernameUser?username='+key;
+				$("input[name='key']").val(key);
+				getOne(url);
+			}else{
+				var url = '/admin/user/getAllUser?page=' + page + '&size=' + size;
+				getAll(url);
+			}
+
+		}
+
+		function getAll(url){
+			$.ajax({
+				url: url,
+				dataType: 'json',
+				async: false,
+				error:function(res){
+					data.result = {};
+				},
+				success: function(response) {
+					if (response.code == 200) {
+							data =response;
+							for(var i=0;i<data.result.length;i++){
+								data.result[i].regdate = new Date(data.result[i].regdate).format("YYYY-MM-dd");
+							}
+					}
+				}
+			});
+			var html = template('tpl', data.result);
+			document.getElementById('content').innerHTML = html;
+		}
+
+
+
+		function getOne(url){
+			$.ajax({
+				url: url,
+				dataType: 'json',
+				async: false,
+				error:function(res){
+					data.result = {};
+				},
+				success: function(response) {
+					if (response.code == 200) {
+							data =response;
+						  data.result.regdate = new Date(data.result.regdate).format("YYYY-MM-dd");
+					}
+				}
+			});
+			var html = template('tpl_one', data.result);
+			document.getElementById('content').innerHTML = html;
+		}
+
+		function getPage(size) {
+			var totalPage;
+			if(key!=null){
+				var url = '/admin//site/list/like/1?key='+key+'&pageSize='+size;
+			}else{
+				var url = '/admin/user/getAllUser?page=' + page + '&size=' + size;
+			}
+			$.ajax({
+				url: url,
+				dataType: 'json',
+				async: false,
+				success: function(response) {
+					totalPage = response.result.totlepage;
+
+				}
+			});
+			return totalPage;
+		}
+
+
+		function deleteData(id) {
+			layer.open({
+				content: '你确定要删除么?',
+				btn: ['确定', '取消'],
+				yes: function(index, layero) {
+					//按钮【按钮一】的回调
+					$.ajax({
+						url: '/admin/user/deleteUser?uid=' + id,
+						dataType: 'json',
+						async: false,
+						success: function(response) {
+							layer.close(index);
+							if (response.code == 200) {
+								toast("删除成功");
+								$("tr[data-id='" + id + "']").hide();
+							} else {
+								toast("删除失败");
+							}
+						}
+					});
+
+				}
+			});
+		}
+
+		function sequence(id,sq){
+			layer.open({
+				title:"修改排序",
+				content:'排序号越大，前台显示越往前<br/><input type="text" id="seq" value="'+sq+'" name="title" lay-verify="required" autocomplete="off"  class="layui-input">',
+				btn: ['确定', '关闭'],
+				yes: function(index, layero){
+					//按钮【按钮一】的回调
+					$.ajax({
+						url: '/admin/site/top/'+id+'?sequence=' + $("#seq").val(),
+						dataType: 'json',
+						async: false,
+						success: function(response) {
+							if (response.code == 200) {
+								toast("修改成功");
+								location.reload();
+							} else {
+								toast("修改失败");
+							}
+
+						}
+					});
+				}
+			});
+		}
+	</script>
+</body>
+
+</html>

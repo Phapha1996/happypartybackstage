@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<title>评价管理</title>
+	<link rel="stylesheet" href="../plugins/layui/css/layui.css" media="all" />
+	<link rel="stylesheet" href="../css/global.css" media="all">
+	<link rel="stylesheet" href="../plugins/font-awesome/css/font-awesome.min.css">
+	<link rel="stylesheet" href="../css/table.css" />
+</head>
+
+<body>
+	<div class="admin-main">
+		<blockquote class="layui-elem-quote">
+			<button type="button" onclick="history.go(-1)"  class="layui-btn layui-btn-small">返回</button>
+		</blockquote>
+		<fieldset class="layui-elem-field">
+			<legend>评价列表</legend>
+			<div class="layui-field-box layui-form">
+				<table class="layui-table admin-table">
+					<thead>
+						<tr>
+							<th style="width: 30px;">id</th>
+							<th>内容</th>
+							<th>商品分类</th>
+							<th>商品</th>
+							<th>评价用户</th>
+							<th>时间</th>
+							<th>操作</th>
+						</tr>
+					</thead>
+					<tbody id="content">
+					</tbody>
+				</table>
+			</div>
+		</fieldset>
+		<div class="admin-table-page">
+			<div id="paged" class="page">
+
+			</div>
+		</div>
+	</div>
+
+	<!--模板-->
+	<script type="text/html" id="tpl">
+		<% for(var i=0;i<$data.length;i++){ %>
+			<tr data-id="<%==$data[i].did %>">
+				<td>
+					<%==$data[i].did %>
+				</td>
+				<td>
+					<%==$data[i].content %>
+				</td>
+				<td>
+					<%==$data[i].productType %>
+				</td>
+				<td>
+					<a onclick="check(<%==$data[i].productId %>,'<%==$data[i].productContent %>')">查看商品</a>
+				</td>
+				<td>
+					<%==$data[i].user.nickname %>
+				</td>
+				<td>
+					<%==$data[i].ctime %>
+				</td>
+				<td>
+					<a onclick="update(<%==$data[i].did %>,'<%==$data[i].content %>')" class="info layui-btn layui-btn-normal layui-btn-mini">编辑</a>
+					<a onclick="deleteData(<%==$data[i].did %>)" data-opt="del" class="layui-btn layui-btn-danger layui-btn-mini">删除</a>
+				</td>
+			</tr>
+			<% } %>
+	</script>
+	<script type="text/javascript" src="../plugins/layui/layui.js"></script>
+	<script type="text/javascript" src="../js/template.js"></script>
+	<script type="text/javascript" src="../js/public.js"></script>
+	<script type="text/javascript" src="../js/jquery.min.js"></script>
+	<script>
+		var data;
+		var page = 1;
+		var size = 10;
+		//initPage(page,size);
+		var pageData;
+		var type = getUrlParam("type");
+		var id = getUrlParam("id");
+
+
+		layui.use(['laypage', 'layer', 'element'], function() {
+			var laypage = layui.laypage,
+				layer = layui.layer;
+			var $ = layui.jquery;
+			var totalPage = getPage(size);
+			laypage({
+				cont: 'paged',
+				pages: totalPage,
+				skip: true,
+				jump: function(obj, first) {
+					initPage(obj.curr, size);
+				}
+			});
+		});
+
+		function initPage(page, size) {
+			var url = '/admin/discuss/list/'+page+'?productType='+type+'&productId='+id+'&pageSize='+size;
+			$.ajax({
+				url: url,
+				dataType: 'json',
+				async: false,
+				success: function(response) {
+					if (response.code == 200) {
+						data = response;
+						for (var i = 0; i < data.result.list.length; i++) {
+							data.result.list[i].ctime = new Date(data.result.list[i].ctime).format("YYYY-MM-dd");
+						}
+					}
+				}
+			});
+			var html = template('tpl', data.result.list);
+			document.getElementById('content').innerHTML = html;
+		}
+
+		function getPage(size) {
+			var totalPage;
+			var url = '/admin/discuss/list/'+page+'?productType='+type+'&productId='+id+'&pageSize='+size;
+			$.ajax({
+				url: url,
+				dataType: 'json',
+				async: false,
+				success: function(response) {
+					totalPage = response.result.totlepage;
+
+				}
+			});
+			return totalPage;
+		}
+
+		function deleteData(id) {
+			layer.open({
+				content: '你确定要删除么?',
+				btn: ['确定', '取消'],
+				yes: function(index, layero) {
+					//按钮【按钮一】的回调
+					$.ajax({
+						url: '/admin/discuss/delete/' + id,
+						dataType: 'json',
+						async: false,
+						success: function(response) {
+							layer.close(index);
+							if (response.code == 200) {
+								toast("删除成功");
+								$("tr[data-id='" + id + "']").hide();
+							} else {
+								toast("删除失败");
+							}
+						}
+					});
+
+				}
+			});
+		}
+
+		function update(id,content) {
+			layer.open({
+				title:"修改评价",
+				content: '<textarea style="width:100%;height:80%;" id="discussContent">'+content+'</textarea>',
+				area:["500px","300px"],
+				btn: ['确定'],
+				yes: function(index, layero) {
+					$.ajax({
+						url: '/admin/discuss/update?content='+document.getElementById("discussContent").value+'&did=' + id,
+						dataType: 'json',
+						async: false,
+						success: function(response) {
+							layer.close(index);
+							if (response.code == 200) {
+								toast("修改成功");
+								location.reload();
+							} else {
+								toast("修改失败");
+							}
+						}
+					});
+				}
+			});
+		}
+
+		function check(id,content) {
+			layer.open({
+				title:"查看商品",
+				type: 2,
+				content: 'http://m.baidu.com',
+				area:["350px","600px"],
+			});
+		}
+	</script>
+</body>
+
+
+
+</div>
+
+</html>

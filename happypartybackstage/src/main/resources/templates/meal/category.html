@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<title>服务管理</title>
+	<link rel="stylesheet" href="../plugins/layui/css/layui.css" media="all" />
+	<link rel="stylesheet" href="../css/global.css" media="all">
+	<link rel="stylesheet" href="../plugins/font-awesome/css/font-awesome.min.css">
+	<link rel="stylesheet" href="../css/table.css" />
+</head>
+
+<body>
+	<div class="admin-main">
+		<blockquote class="layui-elem-quote">
+			<button type="button" class="layui-btn layui-btn-small" onclick="history.go(-1)">返回</button>
+			<button type="button" id="addView" class="layui-btn layui-btn-small"><i class="fa fa-plus" aria-hidden="true"></i>添加</button>
+		</blockquote>
+		<fieldset class="layui-elem-field">
+			<legend>套餐分类列表</legend>
+			<div class="layui-field-box layui-form">
+				<table class="layui-table admin-table">
+					<thead>
+						<tr>
+							<th style="width: 30px;">id</th>
+							<th>分类名</th>
+							<th>操作</th>
+						</tr>
+					</thead>
+					<tbody id="content">
+					</tbody>
+				</table>
+			</div>
+		</fieldset>
+		<div class="admin-table-page">
+			<div id="paged" class="page">
+
+			</div>
+		</div>
+	</div>
+
+	<!--模板-->
+	<script type="text/html" id="tpl">
+		<% for(var i=0;i<$data.length;i++){ %>
+			<tr data-id="<%==$data[i].mcid %>">
+				<td>
+					<%==$data[i].mcid %>
+				</td>
+				<td>
+					<%==$data[i].categoryName %>
+				</td>
+				<td>
+					<a onclick="edit(<%==$data[i].mcid%>,'<%==$data[i].categoryName%>')" class="info layui-btn layui-btn-warm layui-btn-mini">编辑</a>
+					<a href="/admin/img?type=套餐类型&id=<%==$data[i].mcid %>" class="info layui-btn layui-btn layui-btn-mini">图片管理</a>
+					<a onclick="deleteData(<%==$data[i].mcid %>)" data-opt="del" class="layui-btn layui-btn-danger layui-btn-mini">删除</a>
+				</td>
+			</tr>
+			<% } %>
+	</script>
+	<script type="text/javascript" src="../plugins/layui/layui.js"></script>
+	<script type="text/javascript" src="../js/template.js"></script>
+	<script type="text/javascript" src="../js/public.js"></script>
+	<script type="text/javascript" src="../js/jquery.min.js"></script>
+	<script>
+		var data;
+		var page = 1;
+		var size = 100;
+		//initPage(page,size);
+		var pageData;
+
+		document.getElementById("addView").onclick = function() {
+			add();
+		};
+
+		layui.use(['laypage', 'layer', 'element'], function() {
+			var laypage = layui.laypage,
+				layer = layui.layer;
+			var $ = layui.jquery;
+			laypage({
+				cont: 'paged',
+				pages: 1,
+				skip: true,
+				jump: function(obj, first) {
+					initPage(obj.curr, size);
+				}
+			});
+		});
+
+		function initPage(page, size) {
+			var url = "/admin/meal/cat/list/"+page+"?pageSize="+size;
+			$.ajax({
+				url: url,
+				dataType: 'json',
+				async: false,
+				success: function(response) {
+					if (response.code == 200) {
+						data = response;
+					}
+				}
+			});
+			var html = template('tpl', data.result.list);
+			document.getElementById('content').innerHTML = html;
+		}
+
+
+		function deleteData(id) {
+			layer.open({
+				content: '你确定要删除么?',
+				btn: ['确定', '取消'],
+				yes: function(index, layero) {
+					//按钮【按钮一】的回调
+					$.ajax({
+						url: '/admin/meal/cat/delete/' + id,
+						dataType: 'json',
+						async: false,
+						success: function(response) {
+							layer.close(index);
+							if (response.code == 200) {
+								toast("删除成功");
+								$("tr[data-id='" + id + "']").hide();
+							} else {
+								toast("删除失败");
+							}
+						}
+					});
+
+				}
+			});
+		}
+
+		function edit(id, name) {
+			layer.open({
+				title: "修改分类",
+				content: '<input type="text" id="categoryName" value="' + name + '"  lay-verify="required" autocomplete="off"  class="layui-input">',
+				btn: ['确定', '取消'],
+				yes: function(index, layero) {
+					$.ajax({
+						url:'/admin/meal/cat/update?categoryName='+ $("#categoryName").val() +'&mcid='+id,
+						dataType: 'json',
+						async: false,
+						success: function(response) {
+							layer.close(index);
+							if (response.code == 200) {
+								toast("修改成功");
+								location.reload();
+							} else {
+								toast("修改失败");
+							}
+						}
+					});
+
+				}
+			});
+		}
+
+
+		function add() {
+			layer.open({
+				title: "添加分类",
+				content: '<input type="text" id="categoryName" value=""  lay-verify="required" autocomplete="off"  class="layui-input">',
+				btn: ['确定', '取消'],
+				yes: function(index, layero) {
+					$.ajax({
+						url: '/admin/meal/cat/add?categoryName='+document.getElementById("categoryName").value,
+						dataType: 'json',
+						async: false,
+						success: function(response) {
+							layer.close(index);
+							if (response.code == 200) {
+								toast("添加成功");
+								location.reload();
+							} else {
+								toast("添加失败");
+							}
+						}
+					});
+
+				}
+			});
+		}
+	</script>
+</body>
+
+
+
+</div>
+
+</html>

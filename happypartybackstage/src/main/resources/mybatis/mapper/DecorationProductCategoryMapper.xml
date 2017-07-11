@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<!-- author:Caizhf -->
+<!-- date:2017-6-21 -->
+<mapper namespace="com.party.decoration.mapper.DecorationProductCategoryMapper">
+	<resultMap type="com.party.domain.DecorationProductCategory" id="baseMap">
+		<id column="dcid" property="dcid"/>
+		<result column="cat_name" property="catName"/>
+	</resultMap>
+	
+	<insert id="save" parameterType="com.party.domain.DecorationProductCategory">
+		INSERT INTO dec_pro_category(cat_name) VALUES(#{catName})
+	</insert>
+	
+	<delete id="deleteById" parameterType="java.lang.Integer">
+		DELETE FROM dec_pro_category WHERE dcid=#{dcid} 
+	</delete>
+	
+	<update id="updateById" parameterType="com.party.domain.DecorationProductCategory">
+		UPDATE dec_pro_category SET cat_name=#{catName} WHERE dcid=#{dcid}
+	</update>
+	
+	<select id="countList" resultType="int">
+		SELECT COUNT(*) FROM dec_pro_category
+	</select>
+	
+	<select id="list" resultMap="baseMap">
+		SELECT * FROM dec_pro_category LIMIT #{startIndex},#{pageSize}
+	</select>
+	
+	<select id="findById" resultMap="baseMap">
+		SELECT * FROM dec_pro_category WHERE dcid=#{dcid}
+	</select>
+
+</mapper>

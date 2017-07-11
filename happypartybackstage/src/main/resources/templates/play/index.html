@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<title>用户管理</title>
+	<link rel="stylesheet" href="plugins/layui/css/layui.css" media="all" />
+	<link rel="stylesheet" href="css/global.css" media="all">
+	<link rel="stylesheet" href="plugins/font-awesome/css/font-awesome.min.css">
+	<link rel="stylesheet" href="css/table.css" />
+</head>
+
+<body>
+	<div class="admin-main">
+		<blockquote class="layui-elem-quote">
+			<button type="button" class="layui-btn layui-btn-small" id="addview"><i class="fa fa-plus" aria-hidden="true"></i> 添加</button>
+		</blockquote>
+		<fieldset class="layui-elem-field">
+			<legend>轮播列表</legend>
+			<div class="layui-field-box layui-form">
+				<table class="layui-table admin-table">
+					<thead>
+						<tr>
+							<th style="width: 30px;">id</th>
+							<th>链接</th>
+							<th>操作</th>
+						</tr>
+					</thead>
+					<tbody id="content">
+					</tbody>
+				</table>
+			</div>
+		</fieldset>
+		<div class="admin-table-page">
+			<div id="paged" class="page">
+
+			</div>
+		</div>
+	</div>
+
+	<!--模板-->
+	<script type="text/html" id="tpl">
+			<% for(var i=0;i<$data.length;i++){ %>
+				<tr data-id="<%==$data[i].pid %>">
+					<td>
+					<%==$data[i].pid%>
+					</td>
+					<td>
+						<%==$data[i].link_url %>
+					</td>
+					<td>
+						<a onclick="edit(<%==$data[i].pid%>,'<%==$data[i].link_url%>')"class="info layui-btn layui-btn-normal layui-btn-mini">编辑</a>
+						<a onclick="deleteData(<%==$data[i].pid %>)" data-opt="del" class="layui-btn layui-btn-danger layui-btn-mini">删除</a>
+					</td>
+				</tr>
+			<% } %>
+	</script>
+
+	<script type="text/javascript" src="plugins/layui/layui.js"></script>
+	<script type="text/javascript" src="js/template.js"></script>
+	<script type="text/javascript" src="js/public.js"></script>
+	<script type="text/javascript" src="js/jquery.min.js"></script>
+	<script>
+		var data;
+		var page = 1;
+		var size = 10;
+		//initPage(page,size);
+		var pageData;
+		var type = getUrlParam("type");
+
+		document.getElementById("addview").onclick = function(){
+			location.href = '/admin/play/addview?type='+type;
+		}
+
+		layui.use(['laypage', 'layer', 'element'], function() {
+			var laypage = layui.laypage,
+				layer = layui.layer;
+			var $ = layui.jquery;
+			// var totalPage = getPage(size);
+			 laypage({
+				cont: 'paged',
+				pages: 1,
+				skip: true,
+				jump: function(obj, first) {
+					initPage(obj.curr, size);
+
+				}
+			});
+		});
+
+		function initPage(page, size) {
+				var url = '/admin/home/findPlay?type='+type;
+				$.ajax({
+					url: url,
+					dataType: 'json',
+					async: false,
+					error:function(res){
+						data.result = {};
+					},
+					success: function(response) {
+						if (response.code == 200) {
+								data =response;
+								for(var i=0;i<data.result.length;i++){
+									data.result[i].regdate = new Date(data.result[i].regdate).format("YYYY-MM-dd");
+								}
+						}
+					}
+				});
+				var html = template('tpl', data.result);
+				document.getElementById('content').innerHTML = html;
+
+		}
+
+		function deleteData(id) {
+			layer.open({
+				content: '你确定要删除么?',
+				btn: ['确定', '取消'],
+				yes: function(index, layero) {
+					//按钮【按钮一】的回调
+					$.ajax({
+						url: '/admin/home/deletePlay?pid=' + id,
+						dataType: 'json',
+						async: false,
+						success: function(response) {
+							layer.close(index);
+							if (response.code == 200) {
+								toast("删除成功");
+								$("tr[data-id='" + id + "']").hide();
+							} else {
+								toast("删除失败");
+							}
+						}
+					});
+
+				}
+			});
+		}
+
+		function edit(id, url) {
+			layer.open({
+				title: "修改链接",
+				content: '<input type="text" id="linkUrl" value="' + url + '"  lay-verify="required|url" autocomplete="off"  class="layui-input">',
+				btn: ['确定', '取消'],
+				yes: function(index, layero) {
+					$.ajax({
+						url: '/admin/home/updatePlay?url=' + $("#linkUrl").val() +'&pid=' + id,
+						dataType: 'json',
+						async: false,
+						success: function(response) {
+							layer.close(index);
+							if (response.code == 200) {
+								toast("修改成功");
+								//location.reload();
+							} else {
+								toast("修改失败");
+							}
+						}
+					});
+
+				}
+			});
+		}
+
+	</script>
+</body>
+
+</html>

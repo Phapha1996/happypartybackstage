@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>用户管理</title>
+		<link rel="stylesheet" href="plugins/layui/css/layui.css" media="all" />
+		<link rel="stylesheet" href="css/global.css" media="all">
+		<link rel="stylesheet" href="plugins/font-awesome/css/font-awesome.min.css">
+		<link rel="stylesheet" href="css/table.css" />
+	</head>
+
+	<body>
+		<div class="admin-main">
+			<fieldset class="layui-elem-field">
+				<legend>定制服务</legend>
+				<div class="layui-field-box layui-form">
+					<table class="layui-table admin-table">
+						<thead>
+							<tr>
+								<th style="width: 30px;">序号</th>
+								<th>联系人</th>
+								<th>活动类型</th>
+								<th>活动区域</th>
+								<th>活动时间</th>
+								<th>联系方式</th>
+								<th>操作</th>
+							</tr>
+						</thead>
+						<tbody id="content">
+						</tbody>
+					</table>
+				</div>
+			</fieldset>
+			<div class="admin-table-page">
+				<div id="paged" class="page">
+				</div>
+			</div>
+		</div>
+
+		<!--模板-->
+		<script type="text/html" id="tpl">
+			<% for(var i=0;i<result.length;i++){ %>
+			<tr data-id="<%==result[i].cuid %>">
+				<td>
+					<%==i+1%>
+				</td>
+				<td>
+					<%==result[i].cu_user %>
+				</td>
+				<td>
+					<%==result[i].cu_type %>
+				</td>
+				<td>
+					<%==result[i].cu_area %>
+				</td>
+				<td>
+					<%==result[i].cu_time %>
+				</td>
+				<td>
+					<%==result[i].cu_phone %>
+				</td>
+				<td>
+					<a  href="/admin/custom/info?id=<%==result[i].cuid %>" class="info layui-btn layui-btn-normal layui-btn-mini">查看</a>
+					<a onclick="deleteData(<%==result[i].cuid %>)" data-opt="del" class="layui-btn layui-btn-danger layui-btn-mini">删除</a>
+				</td>
+			</tr>
+			<% } %>
+		</script>
+		<script type="text/javascript" src="plugins/layui/layui.js"></script>
+		<script type="text/javascript" src="js/jquery.min.js"></script>
+		<script type="text/javascript" src="js/template.js"></script>
+		<script type="text/javascript" src="js/public.js"></script>
+		<script>
+			var data;
+			var page = 1;
+			var size = 10;
+
+			//initPage(page,size);
+
+			var pageData;
+			layui.use(['laypage', 'layer'], function() {
+				var laypage = layui.laypage,
+					layer = layui.layer;
+				laypage({
+					cont: 'paged',
+					pages: 100,
+					skip: true,
+					jump: function(obj, first) {
+						initPage(obj.curr, size);
+					}
+				});
+			});
+
+			function initPage(page, size) {
+				$.ajax({
+					url: '/admin/custom/findallcustom?page=' + page + '&size=' + size,
+					dataType: 'json',
+					async: false,
+					success: function(response) {
+						if(response.code == 200) {
+							data = response;
+						}
+					}
+				});
+				var html = template('tpl', data);
+				document.getElementById('content').innerHTML = html;
+			}
+
+			function deleteData(id) {
+				layer.open({
+					content: '你确定要删除么?',
+					btn: ['确定', '取消'],
+					yes: function(index, layero) {
+						//按钮【按钮一】的回调
+						$.ajax({
+							url: '/admin/custom/deletecustom?cuid=' + id,
+							dataType: 'json',
+							async: false,
+							success: function(response) {
+								layer.close(index);
+								if(response.code == 200) {
+									toast("删除成功");
+									$("tr[data-id='" + id + "']").hide();
+								} else {
+									toast("删除失败");
+								}
+							}
+						});
+
+					}
+				});
+			}
+
+		</script>
+	</body>
+
+</html>
